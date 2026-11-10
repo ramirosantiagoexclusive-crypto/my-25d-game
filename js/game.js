@@ -88,7 +88,21 @@ function createPlayer() {
     rightEye.position.set(0.15, 2.15, 0.35);
     group.add(rightEye);
     
-    // Ноги
+    // Руки (будут анимироваться)
+    const armGeometry = new THREE.BoxGeometry(0.25, 0.9, 0.25);
+    const armMaterial = new THREE.MeshLambertMaterial({ color: 0x2d5016 });
+    
+    const leftArm = new THREE.Mesh(armGeometry, armMaterial);
+    leftArm.position.set(-0.55, 1.3, 0);
+    leftArm.castShadow = true;
+    group.add(leftArm);
+    
+    const rightArm = new THREE.Mesh(armGeometry, armMaterial);
+    rightArm.position.set(0.55, 1.3, 0);
+    rightArm.castShadow = true;
+    group.add(rightArm);
+    
+    // Ноги (будут анимироваться)
     const legGeometry = new THREE.BoxGeometry(0.3, 0.8, 0.3);
     const legMaterial = new THREE.MeshLambertMaterial({ color: 0x3d2817 });
     
@@ -102,13 +116,11 @@ function createPlayer() {
     rightLeg.castShadow = true;
     group.add(rightLeg);
     
+    // Сохраняем ссылки на конечности для анимации
+    group.userData = { leftArm, rightArm, leftLeg, rightLeg };
+    
     return group;
 }
-
-player.mesh = createPlayer();
-scene.add(player.mesh);
-console.log('✅ Персонаж создан');
-
 // ========== УПРАВЛЕНИЕ ==========
 const keys = {};
 
@@ -141,7 +153,24 @@ function updatePlayer() {
         moveX *= 0.7071;
         moveZ *= 0.7071;
     }
+    // Анимация ходьбы
+if (moveX !== 0 || moveZ !== 0) {
+    const time = Date.now() * 0.008;
+    const swing = Math.sin(time) * 0.5;
     
+    const parts = player.mesh.userData;
+    parts.leftLeg.rotation.x = swing;
+    parts.rightLeg.rotation.x = -swing;
+    parts.leftArm.rotation.x = -swing;
+    parts.rightArm.rotation.x = swing;
+} else {
+    // Возврат в исходное положение
+    const parts = player.mesh.userData;
+    parts.leftLeg.rotation.x = 0;
+    parts.rightLeg.rotation.x = 0;
+    parts.leftArm.rotation.x = 0;
+    parts.rightArm.rotation.x = 0;
+}
     player.x += moveX * currentSpeed;
     player.z += moveZ * currentSpeed;
     
