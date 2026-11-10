@@ -47,20 +47,21 @@ gridHelper.material.opacity = 0.2;
 gridHelper.material.transparent = true;
 scene.add(gridHelper);
 
-// ========== ПЕРСОНАЖ (из примитивов) ==========
+// ========== ПЕРСОНАЖ ==========
 const player = {
     mesh: null,
     x: 0,
     z: 0,
     speed: 0.05,
     sprintSpeed: 0.1,
-    isSprinting: false
+    isSprinting: false,
+    isMoving: false
 };
 
 function createPlayer() {
     const group = new THREE.Group();
     
-    // Тело (зеленая куртка)
+    // Тело
     const bodyGeometry = new THREE.BoxGeometry(0.8, 1.2, 0.5);
     const bodyMaterial = new THREE.MeshLambertMaterial({ color: 0x2d5016 });
     const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
@@ -68,7 +69,7 @@ function createPlayer() {
     body.castShadow = true;
     group.add(body);
     
-    // Голова (черный шлем)
+    // Голова
     const headGeometry = new THREE.SphereGeometry(0.4, 16, 16);
     const headMaterial = new THREE.MeshLambertMaterial({ color: 0x1a1a1a });
     const head = new THREE.Mesh(headGeometry, headMaterial);
@@ -76,7 +77,7 @@ function createPlayer() {
     head.castShadow = true;
     group.add(head);
     
-    // Красные глаза
+    // Глаза
     const eyeGeometry = new THREE.SphereGeometry(0.08, 8, 8);
     const eyeMaterial = new THREE.MeshLambertMaterial({ color: 0xff3300, emissive: 0xff0000 });
     
@@ -88,7 +89,7 @@ function createPlayer() {
     rightEye.position.set(0.15, 2.15, 0.35);
     group.add(rightEye);
     
-    // Руки (будут анимироваться)
+    // Руки
     const armGeometry = new THREE.BoxGeometry(0.25, 0.9, 0.25);
     const armMaterial = new THREE.MeshLambertMaterial({ color: 0x2d5016 });
     
@@ -102,7 +103,7 @@ function createPlayer() {
     rightArm.castShadow = true;
     group.add(rightArm);
     
-    // Ноги (будут анимироваться)
+    // Ноги
     const legGeometry = new THREE.BoxGeometry(0.3, 0.8, 0.3);
     const legMaterial = new THREE.MeshLambertMaterial({ color: 0x3d2817 });
     
@@ -116,11 +117,21 @@ function createPlayer() {
     rightLeg.castShadow = true;
     group.add(rightLeg);
     
-    // Сохраняем ссылки на конечности для анимации
-    group.userData = { leftArm, rightArm, leftLeg, rightLeg };
+    // ВАЖНО: сохраняем ссылки на конечности
+    group.userData = {
+        leftArm: leftArm,
+        rightArm: rightArm,
+        leftLeg: leftLeg,
+        rightLeg: rightLeg
+    };
     
     return group;
 }
+
+player.mesh = createPlayer();
+scene.add(player.mesh);
+console.log('✅ Персонаж создан');
+
 // ========== УПРАВЛЕНИЕ ==========
 const keys = {};
 
@@ -153,24 +164,9 @@ function updatePlayer() {
         moveX *= 0.7071;
         moveZ *= 0.7071;
     }
-    // Анимация ходьбы
-if (moveX !== 0 || moveZ !== 0) {
-    const time = Date.now() * 0.008;
-    const swing = Math.sin(time) * 0.5;
     
-    const parts = player.mesh.userData;
-    parts.leftLeg.rotation.x = swing;
-    parts.rightLeg.rotation.x = -swing;
-    parts.leftArm.rotation.x = -swing;
-    parts.rightArm.rotation.x = swing;
-} else {
-    // Возврат в исходное положение
-    const parts = player.mesh.userData;
-    parts.leftLeg.rotation.x = 0;
-    parts.rightLeg.rotation.x = 0;
-    parts.leftArm.rotation.x = 0;
-    parts.rightArm.rotation.x = 0;
-}
+    player.isMoving = (moveX !== 0 || moveZ !== 0);
+    
     player.x += moveX * currentSpeed;
     player.z += moveZ * currentSpeed;
     
@@ -182,6 +178,23 @@ if (moveX !== 0 || moveZ !== 0) {
         player.mesh.rotation.y = angle;
     }
     
+    // АНИМАЦИЯ ХОДЬБЫ
+    const parts = player.mesh.userData;
+    if (player.isMoving) {
+        const time = Date.now() * 0.008;
+        const swing = Math.sin(time) * 0.5;
+        parts.leftLeg.rotation.x = swing;
+        parts.rightLeg.rotation.x = -swing;
+        parts.leftArm.rotation.x = -swing;
+        parts.rightArm.rotation.x = swing;
+    } else {
+        parts.leftLeg.rotation.x = 0;
+        parts.rightLeg.rotation.x = 0;
+        parts.leftArm.rotation.x = 0;
+        parts.rightArm.rotation.x = 0;
+    }
+    
+    // Границы
     const limit = 20;
     if (player.x < -limit) player.x = -limit;
     if (player.x > limit) player.x = limit;
