@@ -14,10 +14,11 @@ const store = {
 function mulberry32(seed){ let a=seed|0; return function(){ a=(a+0x6D2B79F5)|0; let t=Math.imul(a^(a>>>15),1|a); t=(t+Math.imul(t^(t>>>7),61|t))^t; return ((t^(t>>>14))>>>0)/4294967296; }; }
 
 /* ==================== СОСТОЯНИЕ ==================== */
-const SAVE_KEY='rpg_valley_save_v6';
+const SAVE_KEY='rpg_valley_save_v7';
 const XP_TABLE=[0,60,160,320,560,900,1400,2100,3000];
 const WORLD_R=100, SAFE_R=118;
-const GATHER_DUR=.55, ACTION_CD=.62, MAX_ACTIVE_DROPS=48, MAX_YIELD=6;
+const GATHER_DUR=.55, ACTION_CD=.62, MAX_ACTIVE_DROPS=120, MAX_YIELD=6;
+const BASE_CAPACITY=60, CAP_PER_LEVEL=8;
 function freshState(){
   return {
     hp:100, stamina:100, coins:20, xp:0, level:1,
@@ -55,7 +56,7 @@ let toastTimer=null, saveTimer=0, hudTimer=0, skyTimer=0;
 let attackQueued=false, interactQueued=false, jumpQueued=false, sprintTouch=false;
 let attackCd=0, actionCd=0, dayTime=.32, nearestInteract=null, shake=0;
 let uiDirty=true, lastPrompt='', travelWatchdog=null;
-let harvestTimes=[];
+let harvestTimes=[], fullNoticeT=0;
 const keys={}, joy={x:0,y:0,id:null};
 const player={x:0,y:0,z:5,vx:0,vz:0,vy:0,grounded:true,facing:Math.PI,walkPhase:0,prevSin:0,landT:0,moving:false,sprinting:false,invuln:0,attackT:0,attackDur:.42,attackHitDone:false,attackTarget:null,gatherT:0,gatherTarget:null,gatherDone:false};
 
@@ -82,13 +83,17 @@ function applyQuality(){
   store.set('rpg_quality',quality);
 }
 
-/* ==================== ПРЕДМЕТЫ ==================== */
+/* ==================== ПРЕДМЕТЫ / ВЕС ==================== */
 const ITEMS=D.items, RAR=D.rarities, CAT=D.categories;
 function item(id){ return ITEMS[id]; }
 function rarityColor(id){ return RAR[item(id).rarity].color; }
 function catMeta(id){ return CAT[item(id).cat]||CAT.resource; }
 function catBadge(id){ const c=catMeta(id);return `<span class="cat-badge" style="color:${c.color};border-color:${c.color}66;background:${c.color}14">${c.icon} ${c.name}</span>`; }
 function count(id){ return S.inventory[id]||0; }
+function weightOf(id,n=1){ return (item(id)?.weight||0)*n; }
+function currentWeight(){ let w=0; for(const id in S.inventory) w+=weightOf(id,count(id)); return Math.round(w*10)/10; }
+function capacity(){ let c=BASE_CAPACITY+(S.level-1)*CAP_PER_LEVEL; for(const sl in S.equipment){const id=S.equipment[sl];if(id&&item(id)&&item(id).capacity)c+=item(id).capacity;} return c; }
+function canPickup(id,n=1){ return currentWeight()+weightOf(id,n)<=capacity()+1e-6; }
 function addItem(id,n=1){ if(!item(id))return; S.inventory[id]=count(id)+n; uiDirty=true; }
 function takeItem(id,n=1){ if(count(id)<n)return false; S.inventory[id]-=n; if(S.inventory[id]<=0)delete S.inventory[id]; uiDirty=true; return true; }
 function equipItem(id){
@@ -110,7 +115,7 @@ function stats(){
 function addXP(n){
   S.xp+=n; let lvl=1;
   for(let i=0;i<XP_TABLE.length;i++) if(S.xp>=XP_TABLE[i]) lvl=i+1;
-  if(lvl>S.level){ S.level=lvl; S.hp=stats().maxHp; toast('⭐ Уровень '+lvl+'!'); Sfx.level(); uiDirty=true; }
+  if(lvl>S.level){ S.level=lvl; S.hp=stats().maxHp; toast('⭐ Уровень '+lvl+'! Вместимость рюкзака выросла.'); Sfx.level(); uiDirty=true; }
 }
 function useItem(id){
   const it=item(id); if(!it||!it.use||!takeItem(id,1))return;
@@ -126,6 +131,7 @@ function useItem(id){
 }
 function sellPrice(id){ return Math.max(1,Math.floor(item(id).value*0.6)); }
 function buyPrice(id){ return Math.ceil(item(id).value*2.5); }
+function fullNotice(){ const now=performance.now(); if(now-fullNoticeT<2500)return; fullNoticeT=now; toast('🎒 Рюкзак полон! Продайте, съешьте или выбросьте лишнее.'); Sfx.deny(); }
 
 /* ==================== ЗВУК ==================== */
 const Sfx={
@@ -153,6 +159,23 @@ Sfx.setMuted(Sfx.muted);
 function toast(msg){ const el=$('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2400); }
 function lootFeed(html,color){ const feed=$('lootFeed');const div=document.createElement('div');div.className='loot-line';div.style.borderColor=color||'var(--line)';div.style.color=color||'var(--text)';div.innerHTML=html;feed.appendChild(div);while(feed.children.length>5)feed.removeChild(feed.firstChild);setTimeout(()=>{if(div.parentNode)div.parentNode.removeChild(div);},3100); }
 function save(){ store.set(SAVE_KEY,S); }
+
+/* Индикатор веса рюкзака */
+const capStyle=document.createElement('style');
+capStyle.textContent=`
+#capChip{gap:7px}
+#capChip.full{border-color:var(--danger);box-shadow:0 0 14px rgba(255,90,95,.35)}
+#capChip.full #capFill{background:linear-gradient(90deg,#ff5a5f,#ff9f43)}
+#capBar{width:56px;height:7px;border-radius:5px;background:#0d2114;border:1px solid #2c5237;overflow:hidden}
+#capFill{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--teal),var(--amber));transition:width .15s}
+#capText{font-size:11px;min-width:52px;text-align:right}
+`;
+document.head.appendChild(capStyle);
+const capChip=document.createElement('div');
+capChip.className='chip';capChip.id='capChip';
+capChip.innerHTML='🎒 <span id="capText">0/60</span><div id="capBar"><i id="capFill"></i></div>';
+document.querySelector('#hud .hud-group').appendChild(capChip);
+
 function renderHUD(){
   const st=stats();
   $('hpFill').style.width=clamp(S.hp/st.maxHp*100,0,100)+'%';
@@ -162,6 +185,10 @@ function renderHUD(){
   const cur=XP_TABLE[S.level-1]||0,next=XP_TABLE[S.level]||XP_TABLE[XP_TABLE.length-1];
   $('xpFill').style.width=clamp((S.xp-cur)/(next-cur)*100,0,100)+'%';
   $('coinText').textContent=S.coins;$('locText').textContent=D.locations[S.location].name;
+  const w=currentWeight(),cap=capacity();
+  $('capText').textContent=w.toFixed(1)+'/'+cap;
+  $('capFill').style.width=clamp(w/cap*100,0,100)+'%';
+  capChip.classList.toggle('full',w>=cap-0.05);
 }
 function counterKey(type){ return type==='sell'?'sold':type==='buy'?'bought':'gather'; }
 function renderQuest(){
@@ -206,8 +233,8 @@ function buildFilters(){
   $('invFilters').innerHTML=html(invFilter,'inv');
 }
 function renderInventory(){
-  const st=stats();
-  $('statLine').innerHTML='⚔️ '+st.atk+' · 🛡️ '+st.def+' · 🍀 '+st.luck+' · 💡 '+st.light+' · 🔥 '+st.warmth+' · ☠️ '+st.poisonResist+'% · ❄️ '+st.coldResist+'%';
+  const st=stats(),w=currentWeight(),cap=capacity();
+  $('statLine').innerHTML='⚔️ '+st.atk+' · 🛡️ '+st.def+' · 🍀 '+st.luck+' · 💡 '+st.light+' · 🔥 '+st.warmth+' · ☠️ '+st.poisonResist+'% · ❄️ '+st.coldResist+'%<br><span style="color:'+(w>=cap?'var(--danger)':'var(--teal)')+'">🎒 Вес: '+w.toFixed(1)+' / '+cap+'</span>';
   const slotNames={tool:'Инструмент',weapon:'Оружие',armor:'Броня',charm:'Амулет',light:'Свет'};
   $('equipSlots').innerHTML=Object.keys(S.equipment).map(slot=>{ const id=S.equipment[slot];const it=id?item(id):null;
     return `<div class="equip-slot" data-slot="${slot}"><div class="es-label">${slotNames[slot]}</div><div class="es-icon">${it?it.icon:'—'}</div><div class="es-name" style="color:${it?rarityColor(id):'var(--dim)'}">${it?it.name:'Пусто'}</div></div>`; }).join('');
@@ -224,6 +251,7 @@ function renderInvDetail(){
   if(it.slot)buttons+=`<button class="btn-primary" data-action="equip" data-id="${id}">Экипировать</button>`;
   if(it.use)buttons+=`<button class="btn-ghost" data-action="use" data-id="${id}">Использовать</button>`;
   if(it.value>0)buttons+=`<button class="btn-ghost" data-action="sell" data-id="${id}">Продать за ${sellPrice(id)} 🪙</button>`;
+  buttons+=`<button class="btn-ghost" data-action="drop" data-id="${id}">Выбросить 1</button>`;
   box.innerHTML=`<div class="id-name" style="color:${rarityColor(id)}">${it.icon} ${it.name} <span style="font-size:11px;color:var(--dim)">(${RAR[it.rarity].name})</span> ${catBadge(id)}</div><div class="id-purpose">📌 ${cm.purpose}</div><div class="id-desc">${it.desc}</div><div class="id-attrs">${attrText(it)}</div><div class="btn-row" style="justify-content:flex-start;margin-top:10px">${buttons}</div>`;
 }
 function renderCraft(){
@@ -241,11 +269,7 @@ function craft(idx){
   addItem(r.out,r.n||1); addXP(12+RAR[item(r.out).rarity].order*8); Sfx.craft();
   toast('🛠️ Создано: '+item(r.out).name); burst(player.x,1.4,player.z,0xffd166,16,3,3,.8); uiDirty=true; checkTutorial(); save();
 }
-function recordTrade(kind,id,n){
-  ensureCounters();
-  const key=kind==='buy'?'bought':'sold';
-  S.counters[key][id]=(S.counters[key][id]||0)+n;
-}
+function recordTrade(kind,id,n){ ensureCounters(); const key=kind==='buy'?'bought':'sold'; S.counters[key][id]=(S.counters[key][id]||0)+n; }
 function renderTrade(){
   $('tradeCoins').textContent=S.coins;
   const ids=tradeTab==='buy'?D.merchantStock:Object.keys(S.inventory).filter(id=>count(id)>0&&item(id).value>0);
@@ -452,37 +476,66 @@ function buildEnemyModel(type,def){
   return {group:g,parts,flashMats};
 }
 
-/* ==================== ЛУТ ==================== */
-function spawnDrop(itemId,x,y,z,n,source){
+/* ==================== ЛУТ / ВЕС ==================== */
+function spawnDrop(itemId,x,y,z,n,source,pickupDelay=0){
   if(!item(itemId)||n<=0)return;
-  if(world.drops.length>=MAX_ACTIVE_DROPS){ const old=world.drops.shift(); if(old)world.group.remove(old.group); }
+  const merge=world.drops.find(d=>!d.collected&&d.item===itemId&&d.source===source&&Math.hypot(d.x-x,d.z-z)<3.5);
+  if(merge){merge.n+=n;merge.pickupDelay=Math.max(merge.pickupDelay||0,pickupDelay);return;}
+  if(world.drops.length>=MAX_ACTIVE_DROPS){
+    const old=world.drops[0];
+    if(old&&collectDrop(old)){world.group.remove(old.group);world.drops.shift();}
+    else{const any=world.drops.find(d=>!d.collected&&d.item===itemId);if(any){any.n+=n;return;}}
+  }
   const it=item(itemId),color=new THREE.Color(rarityColor(itemId));
-  const g=new THREE.Group();const mesh=new THREE.Mesh(G.drop,new THREE.MeshLambertMaterial({color,emissive:color,emissiveIntensity:.9}));mesh.scale.setScalar(1+RAR[it.rarity].order*.12);g.add(mesh);g.add(glowSprite(color,1.1+RAR[it.rarity].order*.2,.5));
-  g.position.set(x,y,z);world.group.add(g);const a=Math.random()*TAU,sp=1.5+Math.random()*2;
-  world.drops.push({item:itemId,n,source,x,y,z,vx:Math.cos(a)*sp,vy:3+Math.random()*2,vz:Math.sin(a)*sp,group:g,t:0,mesh,collected:false});
+  const g=new THREE.Group();
+  const mesh=new THREE.Mesh(G.drop,new THREE.MeshLambertMaterial({color,emissive:color,emissiveIntensity:.9}));
+  mesh.scale.setScalar(1+RAR[it.rarity].order*.12);g.add(mesh);
+  const glow=glowSprite(color,1.1+RAR[it.rarity].order*.2,.5);g.add(glow);
+  g.position.set(x,y,z);world.group.add(g);
+  const a=Math.random()*TAU,sp=1.5+Math.random()*2;
+  world.drops.push({item:itemId,n,source,x,y,z,vx:Math.cos(a)*sp,vy:3+Math.random()*2,vz:Math.sin(a)*sp,group:g,t:0,mesh,glow,collected:false,pickupDelay,blocked:false});
 }
 function collectDrop(d){
-  if(!d||d.collected)return;
+  if(!d||d.collected)return false;
+  if(!canPickup(d.item,d.n)){fullNotice();d.blocked=true;return false;}
   d.collected=true;
   addItem(d.item,d.n);
   if(d.source==='gather'){ensureCounters();S.counters.gather[d.item]=(S.counters.gather[d.item]||0)+d.n;}
   Sfx.pickup();lootFeed(item(d.item).icon+' +'+d.n+' '+item(d.item).name,rarityColor(d.item));burst(d.x,d.y,d.z,rarityColor(d.item),8,2,2,.5);checkTutorial();
+  return true;
 }
 function updateDrops(dt){
   for(let i=world.drops.length-1;i>=0;i--){
     const d=world.drops[i];
     if(!d||d.collected){world.group.remove(d.group);world.drops.splice(i,1);continue;}
-    d.t+=dt;
+    d.t+=dt;d.pickupDelay=Math.max(0,(d.pickupDelay||0)-dt);
     if(d.t<.5){d.vy-=12*dt;d.x+=d.vx*dt;d.y+=d.vy*dt;d.z+=d.vz*dt;if(d.y<.25){d.y=.25;d.vy*=-.35;d.vx*=.7;d.vz*=.7;}}
     else{
       const dx=player.x-d.x,dz=player.z-d.z,dist=Math.hypot(dx,dz)||1;
-      const pull=Math.min(dist,(6+d.t*4)*dt);
-      d.x+=dx/dist*pull;d.z+=dz/dist*pull;d.y+=(1-d.y)*Math.min(1,dt*6);
-      if(dist<.7){collectDrop(d);world.group.remove(d.group);world.drops.splice(i,1);continue;}
+      const space=canPickup(d.item,d.n);
+      d.blocked=!space;
+      if(space&&d.pickupDelay<=0){
+        const pull=Math.min(dist,(6+d.t*4)*dt);
+        d.x+=dx/dist*pull;d.z+=dz/dist*pull;d.y+=(1-d.y)*Math.min(1,dt*6);
+        if(dist<.7){if(collectDrop(d)){world.group.remove(d.group);world.drops.splice(i,1);continue;}}
+      } else {
+        d.y+=(.3-d.y)*Math.min(1,dt*4);
+      }
     }
-    d.group.position.set(d.x,d.y+Math.sin(d.t*6)*.06,d.z);d.mesh.rotation.y+=dt*3;d.mesh.rotation.x+=dt*2;
-    if(d.t>20){world.group.remove(d.group);world.drops.splice(i,1);}
+    const pulse=d.blocked?1+Math.sin(d.t*8)*.12:1;
+    d.group.position.set(d.x,d.y+Math.sin(d.t*6)*.06,d.z);
+    d.group.scale.setScalar(pulse);
+    d.glow.material.color.set(d.blocked?0xff5a5f:rarityColor(d.item));
+    d.mesh.rotation.y+=dt*3;d.mesh.rotation.x+=dt*2;
   }
+}
+function dropItem(id,n=1){
+  if(count(id)<n)return;
+  takeItem(id,n);
+  const x=player.x+Math.sin(player.facing)*1.3,z=player.z+Math.cos(player.facing)*1.3;
+  spawnDrop(id,x,.8,z,n,'dropped',1.4);
+  toast('Выброшено: '+item(id).name);
+  uiDirty=true;save();
 }
 function spawnSlash(){ const geo=new THREE.TorusGeometry(1.05,.05,6,20,Math.PI*.85);const mat=new THREE.MeshBasicMaterial({color:0xffe9a0,transparent:true,opacity:.85,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide});const m=new THREE.Mesh(geo,mat);const fx=player.x+Math.sin(player.facing)*1.25,fz=player.z+Math.cos(player.facing)*1.25;m.position.set(fx,1.35,fz);m.rotation.set(Math.PI/2,0,-player.facing);world.group.add(m);world.effects.push({mesh:m,t:0,dur:.22}); }
 function updateEffects(dt){ for(let i=world.effects.length-1;i>=0;i--){const e=world.effects[i];e.t+=dt;const p=e.t/e.dur;e.mesh.material.opacity=.85*(1-p);e.mesh.scale.setScalar(1+p*1.4);if(e.t>=e.dur){world.group.remove(e.mesh);e.mesh.geometry.dispose();e.mesh.material.dispose();world.effects.splice(i,1);}} }
@@ -855,6 +908,7 @@ $('equipSlots').addEventListener('click',e=>{const el=e.target.closest('.equip-s
 $('invDetail').addEventListener('click',e=>{const b=e.target.closest('[data-action]');if(!b)return;const id=b.dataset.id;
   if(b.dataset.action==='equip')equipItem(id);
   if(b.dataset.action==='use')useItem(id);
+  if(b.dataset.action==='drop')dropItem(id,1);
   if(b.dataset.action==='sell'&&takeItem(id,1)){S.coins+=sellPrice(id);recordTrade('sell',id,1);Sfx.coin();toast('Продано: '+item(id).name);checkTutorial();save();}});
 $('craftList').addEventListener('click',e=>{const b=e.target.closest('button[data-idx]');if(b&&!b.disabled)craft(parseInt(b.dataset.idx));});
 $('tradeList').addEventListener('click',e=>{const b=e.target.closest('button[data-id]');if(!b||b.disabled)return;const id=b.dataset.id;
