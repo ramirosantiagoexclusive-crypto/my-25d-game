@@ -14,7 +14,7 @@ const store = {
 function mulberry32(seed){ let a=seed|0; return function(){ a=(a+0x6D2B79F5)|0; let t=Math.imul(a^(a>>>15),1|a); t=(t+Math.imul(t^(t>>>7),61|t))^t; return ((t^(t>>>14))>>>0)/4294967296; }; }
 
 /* ==================== СОСТОЯНИЕ ==================== */
-const SAVE_KEY='rpg_valley_save_v5';
+const SAVE_KEY='rpg_valley_save_v6';
 const XP_TABLE=[0,60,160,320,560,900,1400,2100,3000];
 const WORLD_R=100, SAFE_R=118;
 const GATHER_DUR=.55, ACTION_CD=.62, MAX_ACTIVE_DROPS=48, MAX_YIELD=6;
@@ -33,6 +33,20 @@ let S=freshState();
 const saved=store.get(SAVE_KEY,null);
 const hasSave=!!saved;
 if(saved) S=Object.assign(freshState(),saved);
+function ensureCounters(){ if(!S.counters)S.counters={}; ['gather','sold','bought'].forEach(k=>{if(!S.counters[k])S.counters[k]={};}); }
+function normalizeState(){
+  const f=freshState();
+  S.inventory=S.inventory||{};
+  S.equipment=Object.assign(f.equipment,S.equipment||{});
+  S.buffs=Object.assign(f.buffs,S.buffs||{});
+  S.visited=Object.assign(f.visited,S.visited||{});
+  ensureCounters();
+  if(typeof S.tutorialStep!=='number')S.tutorialStep=0;
+  if(typeof S.tutorialDone!=='boolean')S.tutorialDone=false;
+  if(!D.locations[S.location])S.location='valley';
+  ['hp','stamina','coins','xp','level','poison','warmthBuff','playTime'].forEach(k=>{if(typeof S[k]!=='number')S[k]=f[k];});
+}
+normalizeState();
 
 let world=null, state='intro', activePanel='intro';
 let selectedMap='valley', tradeTab='buy', selectedInv=null;
@@ -40,7 +54,7 @@ let craftFilter='all', invFilter='all';
 let toastTimer=null, saveTimer=0, hudTimer=0, skyTimer=0;
 let attackQueued=false, interactQueued=false, jumpQueued=false, sprintTouch=false;
 let attackCd=0, actionCd=0, dayTime=.32, nearestInteract=null, shake=0;
-let uiDirty=true, lastPrompt='';
+let uiDirty=true, lastPrompt='', travelWatchdog=null;
 let harvestTimes=[];
 const keys={}, joy={x:0,y:0,id:null};
 const player={x:0,y:0,z:5,vx:0,vz:0,vy:0,grounded:true,facing:Math.PI,walkPhase:0,prevSin:0,landT:0,moving:false,sprinting:false,invuln:0,attackT:0,attackDur:.42,attackHitDone:false,attackTarget:null,gatherT:0,gatherTarget:null,gatherDone:false};
@@ -149,23 +163,34 @@ function renderHUD(){
   $('xpFill').style.width=clamp((S.xp-cur)/(next-cur)*100,0,100)+'%';
   $('coinText').textContent=S.coins;$('locText').textContent=D.locations[S.location].name;
 }
+function counterKey(type){ return type==='sell'?'sold':type==='buy'?'bought':'gather'; }
 function renderQuest(){
+  ensureCounters();
   if(S.tutorialDone){ $('questText').textContent='Свободное исследование. Редкие предметы добываются в опасных землях.'; $('questProgress').textContent='Уровень '+S.level+' · '+S.coins+' монет'; return; }
   const q=D.tutorial[S.tutorialStep]; if(!q){$('questText').textContent='';$('questProgress').textContent='';return;}
   $('questText').textContent=q.text; let prog='';
-  if(q.type==='gather'||q.type==='sell'||q.type==='buy') prog=Object.entries(q.need).map(([id,n])=>(S.counters[q.type][id]||0)+'/'+n+' '+item(id).name).join(' · ');
+  if(q.type==='gather'||q.type==='sell'||q.type==='buy'){ const ck=counterKey(q.type); prog=Object.entries(q.need).map(([id,n])=>(S.counters[ck][id]||0)+'/'+n+' '+item(id).name).join(' · '); }
   else if(q.type==='have') prog=Object.entries(q.need).map(([id,n])=>count(id)+'/'+n+' '+item(id).name).join(' · ');
   else if(q.type==='equip') prog=S.equipment[q.slot]===q.item?'Готово':'Не экипировано';
   else if(q.type==='travel') prog=S.location===q.target?'Готово':'Вы в долине';
   $('questProgress').textContent=prog;
 }
 function checkTutorial(){
-  if(S.tutorialDone)return; const q=D.tutorial[S.tutorialStep]; if(!q)return; let ok=false;
-  if(q.type==='gather'||q.type==='sell'||q.type==='buy') ok=Object.entries(q.need).every(([id,n])=>(S.counters[q.type][id]||0)>=n);
-  if(q.type==='have') ok=Object.entries(q.need).every(([id,n])=>count(id)>=n);
-  if(q.type==='equip') ok=S.equipment[q.slot]===q.item;
-  if(q.type==='travel') ok=S.location===q.target;
-  if(ok){ S.tutorialStep++; Sfx.pickup(); toast('✅ Цель выполнена!'); if(S.tutorialStep>=D.tutorial.length){S.tutorialDone=true;toast('🎓 Обучение завершено!');} }
+  ensureCounters();
+  if(S.tutorialDone)return;
+  let guard=0;
+  while(!S.tutorialDone && guard++<20){
+    const q=D.tutorial[S.tutorialStep];
+    if(!q){S.tutorialDone=true;break;}
+    let ok=false;
+    if(q.type==='gather'||q.type==='sell'||q.type==='buy'){ const ck=counterKey(q.type); ok=Object.entries(q.need).every(([id,n])=>(S.counters[ck][id]||0)>=n); }
+    else if(q.type==='have') ok=Object.entries(q.need).every(([id,n])=>count(id)>=n);
+    else if(q.type==='equip') ok=S.equipment[q.slot]===q.item;
+    else if(q.type==='travel') ok=S.location===q.target;
+    if(!ok)break;
+    S.tutorialStep++; Sfx.pickup(); toast('✅ Цель выполнена!');
+    if(S.tutorialStep>=D.tutorial.length){S.tutorialDone=true;toast('🎓 Обучение завершено!');}
+  }
   uiDirty=true;
 }
 function attrText(it){
@@ -215,6 +240,11 @@ function craft(idx){
   Object.entries(r.mats).forEach(([id,n])=>takeItem(id,n));
   addItem(r.out,r.n||1); addXP(12+RAR[item(r.out).rarity].order*8); Sfx.craft();
   toast('🛠️ Создано: '+item(r.out).name); burst(player.x,1.4,player.z,0xffd166,16,3,3,.8); uiDirty=true; checkTutorial(); save();
+}
+function recordTrade(kind,id,n){
+  ensureCounters();
+  const key=kind==='buy'?'bought':'sold';
+  S.counters[key][id]=(S.counters[key][id]||0)+n;
 }
 function renderTrade(){
   $('tradeCoins').textContent=S.coins;
@@ -425,10 +455,7 @@ function buildEnemyModel(type,def){
 /* ==================== ЛУТ ==================== */
 function spawnDrop(itemId,x,y,z,n,source){
   if(!item(itemId)||n<=0)return;
-  if(world.drops.length>=MAX_ACTIVE_DROPS){
-    const old=world.drops.shift();
-    if(old){world.group.remove(old.group);}
-  }
+  if(world.drops.length>=MAX_ACTIVE_DROPS){ const old=world.drops.shift(); if(old)world.group.remove(old.group); }
   const it=item(itemId),color=new THREE.Color(rarityColor(itemId));
   const g=new THREE.Group();const mesh=new THREE.Mesh(G.drop,new THREE.MeshLambertMaterial({color,emissive:color,emissiveIntensity:.9}));mesh.scale.setScalar(1+RAR[it.rarity].order*.12);g.add(mesh);g.add(glowSprite(color,1.1+RAR[it.rarity].order*.2,.5));
   g.position.set(x,y,z);world.group.add(g);const a=Math.random()*TAU,sp=1.5+Math.random()*2;
@@ -438,7 +465,7 @@ function collectDrop(d){
   if(!d||d.collected)return;
   d.collected=true;
   addItem(d.item,d.n);
-  if(d.source==='gather')S.counters.gather[d.item]=(S.counters.gather[d.item]||0)+d.n;
+  if(d.source==='gather'){ensureCounters();S.counters.gather[d.item]=(S.counters.gather[d.item]||0)+d.n;}
   Sfx.pickup();lootFeed(item(d.item).icon+' +'+d.n+' '+item(d.item).name,rarityColor(d.item));burst(d.x,d.y,d.z,rarityColor(d.item),8,2,2,.5);checkTutorial();
 }
 function updateDrops(dt){
@@ -471,11 +498,7 @@ function makeStump(type){
 
 /* ==================== ИНСТРУМЕНТЫ / ДОБЫЧА ==================== */
 const TOOL_RU={axe:'топор',pick:'кирка',sickle:'серп'};
-function toolRequirement(node){
-  const def=node.def;
-  if(!def.tool||def.minPower<=0)return null;
-  return {type:def.tool,power:def.minPower};
-}
+function toolRequirement(node){ const def=node.def; if(!def.tool||def.minPower<=0)return null; return {type:def.tool,power:def.minPower}; }
 function canGather(node){
   if(!node||!node.active||node.harvestLock)return {ok:false,reason:'Ресурс уже добыт'};
   if(player.gatherT>0||actionCd>0)return {ok:false,reason:'Действие ещё выполняется'};
@@ -505,15 +528,11 @@ function harvestAllowed(){
 }
 function harvestNode(node){
   if(!node||!node.active||node.harvestLock||node!==player.gatherTarget||!harvestAllowed())return;
-  node.harvestLock=true;
-  node.active=false;
-  node.group.visible=false;
-  node.stump.visible=true;
-  node.collider.disabled=true;
+  node.harvestLock=true; node.active=false;
+  node.group.visible=false; node.stump.visible=true; node.collider.disabled=true;
   node.respawn=35+Math.random()*25;
   const def=node.def;
   computeYield(node).forEach(d=>spawnDrop(d.item,node.x,.8,node.z,d.n,'gather'));
-  const st=stats();
   if(def.tool==='axe'||node.type==='tree')Sfx.chop();
   else if(def.tool==='pick'||node.type==='rock'||node.type==='ore'||node.type==='crystal')Sfx.mine();
   else Sfx.cut();
@@ -524,10 +543,7 @@ function harvestNode(node){
 function tryStartGather(node){
   const check=canGather(node);
   if(!check.ok){if(check.reason!=='Действие ещё выполняется')toast(check.reason);Sfx.deny();return;}
-  player.gatherT=GATHER_DUR;
-  player.gatherTarget=node;
-  player.gatherDone=false;
-  actionCd=ACTION_CD;
+  player.gatherT=GATHER_DUR; player.gatherTarget=node; player.gatherDone=false; actionCd=ACTION_CD;
   player.facing=Math.atan2(node.x-player.x,node.z-player.z);
   Sfx.swing();
 }
@@ -645,8 +661,36 @@ function resolveAttackHit(){ const t=player.attackTarget;if(t&&t.alive&&Math.hyp
 function hurtPlayer(dmg,cause){ if(player.invuln>0||state!=='playing')return;const st=stats();const real=Math.max(1,Math.round(dmg-st.def*.45));S.hp-=real;player.invuln=.7;Sfx.hurt();shake=Math.max(shake,.3);burst(player.x,1.4,player.z,0xff5a5f,14,3,4,.7);lootFeed('−'+real+' HP · '+cause,'#ff5a5f');if(S.hp<=0)die(cause); }
 function die(cause){ S.hp=0;state='dead';Sfx.death();const lost=Math.floor(S.coins*.15);S.coins-=lost;$('deathText').textContent='Причина: '+cause+'. Потеряно '+lost+' монет. Снаряжение сохранено.';openPanel('death'); }
 function respawn(){ S.location='valley';S.visited.valley=true;S.hp=stats().maxHp;S.stamina=stats().maxStamina;S.poison=0;player.x=0;player.z=5;player.y=0;player.vx=player.vz=player.vy=0;cancelGather();world=buildLocation('valley');applyQuality();state='playing';closePanel();toast('Вы вернулись в долину.'); }
-function travel(id){ if(!locationUnlocked(id)||id===S.location)return;$('transitionText').textContent=D.locations[id].name;$('transition').classList.add('show');Sfx.travel();
-  setTimeout(()=>{S.location=id;S.visited[id]=true;player.x=0;player.z=5;player.y=0;player.vx=player.vz=player.vy=0;cancelGather();world=buildLocation(id);applyQuality();dayTime=.32;checkTutorial();uiDirty=true;save();$('transition').classList.remove('show');toast('📍 '+D.locations[id].name);},600); }
+function hideTransition(){ clearTimeout(travelWatchdog); travelWatchdog=null; $('transition').classList.remove('show'); }
+function travel(id){
+  if(!locationUnlocked(id)||id===S.location)return;
+  const prev=S.location;
+  $('transitionText').textContent=D.locations[id].name;
+  $('transition').classList.add('show');
+  Sfx.travel();
+  clearTimeout(travelWatchdog);
+  travelWatchdog=setTimeout(()=>{ $('transition').classList.remove('show'); toast('Переход занял слишком много времени. Попробуйте ещё раз.'); },5000);
+  setTimeout(()=>{
+    try{
+      S.location=id;S.visited[id]=true;
+      player.x=0;player.z=5;player.y=0;player.vx=player.vz=player.vy=0;
+      cancelGather();
+      world=buildLocation(id);
+      applyQuality();
+      dayTime=.32;
+      checkTutorial();
+      uiDirty=true;save();
+      toast('📍 '+D.locations[id].name);
+    }catch(err){
+      console.error(err);
+      S.location=prev;
+      try{world=buildLocation(prev);applyQuality();}catch(e){console.error(e);}
+      toast('Ошибка перехода: '+err.message);
+    }finally{
+      hideTransition();
+    }
+  },600);
+}
 
 /* ==================== ВЗАИМОДЕЙСТВИЯ ==================== */
 function updateInteractions(){
@@ -811,11 +855,11 @@ $('equipSlots').addEventListener('click',e=>{const el=e.target.closest('.equip-s
 $('invDetail').addEventListener('click',e=>{const b=e.target.closest('[data-action]');if(!b)return;const id=b.dataset.id;
   if(b.dataset.action==='equip')equipItem(id);
   if(b.dataset.action==='use')useItem(id);
-  if(b.dataset.action==='sell'&&takeItem(id,1)){S.coins+=sellPrice(id);S.counters.sold[id]=(S.counters.sold[id]||0)+1;Sfx.coin();toast('Продано: '+item(id).name);checkTutorial();save();}});
+  if(b.dataset.action==='sell'&&takeItem(id,1)){S.coins+=sellPrice(id);recordTrade('sell',id,1);Sfx.coin();toast('Продано: '+item(id).name);checkTutorial();save();}});
 $('craftList').addEventListener('click',e=>{const b=e.target.closest('button[data-idx]');if(b&&!b.disabled)craft(parseInt(b.dataset.idx));});
 $('tradeList').addEventListener('click',e=>{const b=e.target.closest('button[data-id]');if(!b||b.disabled)return;const id=b.dataset.id;
-  if(tradeTab==='buy'){const p=buyPrice(id);if(S.coins>=p){S.coins-=p;addItem(id,1);S.counters.bought[id]=(S.counters.bought[id]||0)+1;Sfx.coin();toast('Куплено: '+item(id).name);}}
-  else{const p=sellPrice(id);if(takeItem(id,1)){S.coins+=p;S.counters.sold[id]=(S.counters.sold[id]||0)+1;Sfx.coin();toast('Продано: '+item(id).name);}}
+  if(tradeTab==='buy'){const p=buyPrice(id);if(S.coins>=p){S.coins-=p;addItem(id,1);recordTrade('buy',id,1);Sfx.coin();toast('Куплено: '+item(id).name);}}
+  else{const p=sellPrice(id);if(takeItem(id,1)){S.coins+=p;recordTrade('sell',id,1);Sfx.coin();toast('Продано: '+item(id).name);}}
   checkTutorial();save();});
 $('invFilters').addEventListener('click',e=>{const b=e.target.closest('.filter-btn');if(b){invFilter=b.dataset.cat;buildFilters();renderInventory();}});
 $('craftFilters').addEventListener('click',e=>{const b=e.target.closest('.filter-btn');if(b){craftFilter=b.dataset.cat;buildFilters();renderCraft();}});
