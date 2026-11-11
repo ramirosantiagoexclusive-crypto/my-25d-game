@@ -1,6 +1,5 @@
 /* =====================================================================
-   БАЗА КОНТЕНТА «Долина Светлячков». ~115 предметов, глубокие цепочки крафта.
-   В будущем онлайн-редактор сможет менять именно эти данные.
+   БАЗА КОНТЕНТА. Категории предметов + огромные открытые локации.
    ===================================================================== */
 window.GAME_DATA = {
   rarities: {
@@ -12,8 +11,21 @@ window.GAME_DATA = {
     mythic:    { name:'Мифический',   color:'#ff5a7a', order:5 }
   },
 
+  categories: {
+    resource: { name:'Ресурс',    icon:'⛏️', color:'#9fb8a0', purpose:'Сырьё. Используется как материал в рецептах крафта.' },
+    material: { name:'Материал',  icon:'🧱', color:'#c9b98a', purpose:'Полуфабрикат. Промежуточная деталь для крафта.' },
+    tool:     { name:'Инструмент',icon:'⛏️', color:'#7ee081', purpose:'Надевается в слот «Инструмент». Нужен для добычи ресурсов.' },
+    weapon:   { name:'Оружие',    icon:'⚔️', color:'#ff5a5f', purpose:'Надевается в слот «Оружие». Повышает атаку в бою.' },
+    armor:    { name:'Броня',     icon:'🛡️', color:'#6fc3ff', purpose:'Надевается в слот «Броня». Защита и сопротивления.' },
+    charm:    { name:'Амулет',    icon:'🧿', color:'#b48cff', purpose:'Надевается в слот «Амулет». Пассивные бонусы.' },
+    light:    { name:'Свет',      icon:'💡', color:'#ffd166', purpose:'Надевается в слот «Свет». Освещает путь ночью.' },
+    food:     { name:'Еда',       icon:'🍖', color:'#7ee081', purpose:'Съедобно. Восстанавливает здоровье и силы.' },
+    potion:   { name:'Зелье',     icon:'🧪', color:'#4de3c1', purpose:'Выпивается. Лечит или даёт временный эффект.' },
+    relic:    { name:'Реликвия',  icon:'🏺', color:'#ff5a7a', purpose:'Ценная находка. Дорого продаётся или идёт в крафт.' },
+    quest:    { name:'Особое',    icon:'🎫', color:'#ffd166', purpose:'Предмет для прогресса и открытия новых локаций.' }
+  },
+
   items: {
-    /* ---------- Сырьё ---------- */
     wood:           { name:'Древесина',         cat:'resource', rarity:'common',    icon:'🪵', value:2,   weight:1,    desc:'Основа почти любого крафта.' },
     stone:          { name:'Камень',            cat:'resource', rarity:'common',    icon:'🪨', value:2,   weight:1.2,  desc:'Грубый камень для инструментов.' },
     fiber:          { name:'Волокно',           cat:'resource', rarity:'common',    icon:'🌾', value:1,   weight:0.3,  desc:'Растительные волокна для веревок и ткани.' },
@@ -54,7 +66,6 @@ window.GAME_DATA = {
     fish:           { name:'Рыба',              cat:'food',     rarity:'common',    icon:'🐟', value:5,   weight:0.6,  desc:'Лучше приготовить у костра.', use:{ heal:6, stamina:10 } },
     meat:           { name:'Сырое мясо',        cat:'food',     rarity:'common',    icon:'🥩', value:5,   weight:0.7,  desc:'Готовится у костра.', use:{ heal:3, stamina:8 } },
 
-    /* ---------- Полуфабрикаты ---------- */
     plank:          { name:'Доски',             cat:'material', rarity:'common',    icon:'🟫', value:5,   weight:1.2,  desc:'Обработанная древесина.' },
     rope:           { name:'Верёвка',           cat:'material', rarity:'common',    icon:'🪢', value:5,   weight:0.4,  desc:'Кручёное волокно.' },
     cloth:          { name:'Ткань',             cat:'material', rarity:'common',    icon:'🧵', value:6,   weight:0.4,  desc:'Ткань из волокна.' },
@@ -68,7 +79,6 @@ window.GAME_DATA = {
     ember_ingot:    { name:'Слиток углей',      cat:'material', rarity:'legendary', icon:'🟥', value:180, weight:1.8,  desc:'Металл, впитавший жар пиков.' },
     moon_ingot:     { name:'Лунный слиток',     cat:'material', rarity:'mythic',    icon:'🌙', value:320, weight:1.2,  desc:'Металл холодного лунного света.' },
 
-    /* ---------- Инструменты ---------- */
     stone_axe:      { name:'Каменный топор',    cat:'tool', slot:'tool', rarity:'common',    icon:'🪓', value:14,  weight:2,   desc:'Рубит деревья эффективнее.', gatherType:'axe',  gatherPower:1 },
     stone_pick:     { name:'Каменная кирка',    cat:'tool', slot:'tool', rarity:'common',    icon:'⛏️', value:16,  weight:2.2, desc:'Позволяет добывать руду.', gatherType:'pick', gatherPower:1 },
     gathering_sickle:{name:'Травяной серп',     cat:'tool', slot:'tool', rarity:'common',    icon:'🌾', value:12,  weight:1,   desc:'Больше трав и ягод с кустов.', gatherType:'sickle', gatherPower:1 },
@@ -85,7 +95,6 @@ window.GAME_DATA = {
     ember_pick:     { name:'Кирка углей',       cat:'tool', slot:'tool', rarity:'legendary', icon:'⛏️', value:420, weight:3,   desc:'Легендарная кирка для высшей руды.', gatherType:'pick', gatherPower:5, luck:14 },
     moon_pick:      { name:'Лунная кирка',      cat:'tool', slot:'tool', rarity:'mythic',    icon:'⛏️', value:760, weight:2.4, desc:'Добывает то, что скрыто от других.', gatherType:'pick', gatherPower:6, luck:20 },
 
-    /* ---------- Оружие ---------- */
     wooden_club:    { name:'Деревянная дубина', cat:'weapon', slot:'weapon', rarity:'common',    icon:'🏏', value:12,  weight:2,   desc:'Простое оружие ближнего боя.', atk:3 },
     spear:          { name:'Копьё',             cat:'weapon', slot:'weapon', rarity:'common',    icon:'🔱', value:20,  weight:2.2, desc:'Длинное и дешёвое.', atk:4, speed:0.2 },
     copper_sword:   { name:'Медный меч',        cat:'weapon', slot:'weapon', rarity:'uncommon',  icon:'🗡️', value:45,  weight:2.3, desc:'Первый настоящий клинок.', atk:6 },
@@ -104,7 +113,6 @@ window.GAME_DATA = {
     void_blade:     { name:'Клинок пустоты',    cat:'weapon', slot:'weapon', rarity:'mythic',    icon:'🗡️', value:950, weight:2,   desc:'Режет саму реальность.', atk:34, luck:8 },
     moon_scepter:   { name:'Лунный скипетр',    cat:'weapon', slot:'weapon', rarity:'mythic',    icon:'🔱', value:1100,weight:2,   desc:'Мифическое оружие руин.', atk:32, light:35, luck:6 },
 
-    /* ---------- Броня ---------- */
     cloth_vest:     { name:'Тканевый жилет',    cat:'armor', slot:'armor', rarity:'common',    icon:'🧥', value:18,  weight:1.5, desc:'Минимальная защита.', def:2 },
     padded_armor:   { name:'Стёганая броня',    cat:'armor', slot:'armor', rarity:'common',    icon:'🦺', value:30,  weight:2,   desc:'Мягкая, но держит удар.', def:4, maxStamina:5 },
     leather_armor:  { name:'Кожаная броня',     cat:'armor', slot:'armor', rarity:'uncommon',  icon:'🦺', value:70,  weight:2.5, desc:'Тёплая и прочная.', def:6, warmth:8 },
@@ -121,7 +129,6 @@ window.GAME_DATA = {
     void_mantle:    { name:'Мантия пустоты',    cat:'armor', slot:'armor', rarity:'mythic',    icon:'🥻', value:1200,weight:1,   desc:'Поглощает удары.', def:30, luck:10, speed:0.5 },
     moon_veil:      { name:'Лунная вуаль',      cat:'armor', slot:'armor', rarity:'mythic',    icon:'🥻', value:1300,weight:1,   desc:'Мифическая защита руин.', def:28, luck:9, light:20 },
 
-    /* ---------- Амулеты ---------- */
     lucky_pebble:   { name:'Счастливый камешек',cat:'charm', slot:'charm', rarity:'uncommon', icon:'🍀', value:35,  weight:0.2, desc:'Немного повышает удачу.', luck:4 },
     copper_ring:    { name:'Медное кольцо',     cat:'charm', slot:'charm', rarity:'uncommon', icon:'💍', value:40,  weight:0.1, desc:'Простое кольцо.', def:1, luck:2 },
     wolf_fang:      { name:'Клык волка',        cat:'charm', slot:'charm', rarity:'rare',     icon:'🦷', value:90,  weight:0.3, desc:'Даёт силу и удачу.', atk:3, luck:3 },
@@ -137,7 +144,6 @@ window.GAME_DATA = {
     moon_orb:       { name:'Лунная сфера',      cat:'charm', slot:'charm', rarity:'mythic',   icon:'🔮', value:950, weight:0.5, desc:'Мифическая удача и свет.', luck:16, light:28 },
     void_eye:       { name:'Око пустоты',       cat:'charm', slot:'charm', rarity:'mythic',   icon:'👁️', value:1000,weight:0.3, desc:'Видит скрытое.', luck:22, atk:5 },
 
-    /* ---------- Свет ---------- */
     torch:          { name:'Факел',             cat:'light', slot:'light', rarity:'common',    icon:'🔥', value:15,  weight:1,   desc:'Освещает путь ночью.', light:18 },
     oil_lamp:       { name:'Масляная лампа',    cat:'light', slot:'light', rarity:'uncommon',  icon:'🪔', value:45,  weight:1.2, desc:'Ровный тёплый свет.', light:26, warmth:5 },
     lantern:        { name:'Фонарь',            cat:'light', slot:'light', rarity:'uncommon',  icon:'🏮', value:60,  weight:1.5, desc:'Яркий и надёжный.', light:30 },
@@ -146,7 +152,6 @@ window.GAME_DATA = {
     ember_lantern:  { name:'Фонарь углей',      cat:'light', slot:'light', rarity:'legendary', icon:'🏮', value:480, weight:1.8, desc:'Согревает и освещает.', light:55, warmth:30 },
     star_lantern:   { name:'Звёздный фонарь',   cat:'light', slot:'light', rarity:'mythic',    icon:'🏮', value:850, weight:1,   desc:'Свет далёких звёзд.', light:70, luck:10 },
 
-    /* ---------- Еда и зелья ---------- */
     bread:          { name:'Хлеб',              cat:'food',   rarity:'common',   icon:'🍞', value:8,   weight:0.4, desc:'Восстанавливает силы.', use:{ heal:8,  stamina:25 } },
     cooked_fish:    { name:'Жареная рыба',      cat:'food',   rarity:'uncommon', icon:'🍣', value:18,  weight:0.5, desc:'Сытная еда.', use:{ heal:22, stamina:35 } },
     cooked_meat:    { name:'Жареное мясо',      cat:'food',   rarity:'uncommon', icon:'🍖', value:20,  weight:0.6, desc:'Сытное мясо.', use:{ heal:26, stamina:30 } },
@@ -164,13 +169,11 @@ window.GAME_DATA = {
     elixir_protection:{name:'Эликсир защиты',   cat:'potion', rarity:'legendary',icon:'🛡️', value:240, weight:0.5, desc:'Надолго повышает защиту.', use:{ buffDefense:10 } },
     phoenix_tear:   { name:'Слеза феникса',     cat:'potion', rarity:'mythic',   icon:'🪽', value:600, weight:0.1, desc:'Полностью восстанавливает и снимает всё плохое.', use:{ heal:999, stamina:999, curePoison:true } },
 
-    /* ---------- Особые ---------- */
     valley_token:   { name:'Жетон путника',     cat:'quest', rarity:'rare', icon:'🎫', value:0, weight:0.1, desc:'Пропуск из стартовой долины в опасные земли. Не продаётся.' },
     map_fragment:   { name:'Фрагмент карты',    cat:'quest', rarity:'rare', icon:'🗺️', value:0, weight:0.1, desc:'Открывает отметки на большой карте. Не продаётся.' }
   },
 
   recipes: [
-    /* Полуфабрикаты и плавка */
     { out:'plank',          n:2, mats:{ wood:2 },                              level:1 },
     { out:'rope',           n:1, mats:{ fiber:3 },                             level:1 },
     { out:'cloth',          n:1, mats:{ fiber:4 },                             level:1 },
@@ -184,7 +187,6 @@ window.GAME_DATA = {
     { out:'ember_ingot',    n:1, mats:{ ember_core:1, iron_ingot:2, coal:4 },  level:4 },
     { out:'moon_ingot',     n:1, mats:{ moon_dust:1, silver_ingot:2, crystal_shard:3 }, level:5 },
 
-    /* Базовые инструменты и оружие */
     { out:'stone_axe',      n:1, mats:{ wood:3, stone:2 },                     level:1 },
     { out:'stone_pick',     n:1, mats:{ wood:3, stone:3 },                     level:1 },
     { out:'gathering_sickle',n:1,mats:{ wood:2, stone:1, fiber:2 },            level:1 },
@@ -195,7 +197,6 @@ window.GAME_DATA = {
     { out:'padded_armor',   n:1, mats:{ cloth:5, leather_strip:2 },            level:1 },
     { out:'valley_token',   n:1, mats:{ wood:6, stone:6, fiber:6 },            level:1 },
 
-    /* Медь / бронза / железо */
     { out:'copper_axe',     n:1, mats:{ copper_ore:3, plank:2, rope:1 },       level:2 },
     { out:'copper_pick',    n:1, mats:{ copper_ore:3, plank:2, rope:1 },       level:2 },
     { out:'copper_sword',   n:1, mats:{ bronze_ingot:2, plank:1, leather_strip:1 }, level:2 },
@@ -214,7 +215,6 @@ window.GAME_DATA = {
     { out:'oil_lamp',       n:1, mats:{ glass:1, resin:2, rope:1 },            level:2 },
     { out:'lantern',        n:1, mats:{ iron_ingot:2, glass:2, coal:2 },       level:3 },
 
-    /* Еда и зелья */
     { out:'cooked_fish',    n:1, mats:{ fish:1, coal:1 },                      level:1 },
     { out:'cooked_meat',    n:1, mats:{ meat:1, coal:1, salt:1 },              level:1 },
     { out:'berry_pie',      n:1, mats:{ berry:4, bread:1 },                    level:1 },
@@ -227,7 +227,6 @@ window.GAME_DATA = {
     { out:'greater_healing',n:1, mats:{ herb:6, crystal_shard:1, empty_vial:2 }, level:3 },
     { out:'greater_stamina',n:1, mats:{ berry:6, herb:4, crystal_shard:1, empty_vial:2 }, level:3 },
 
-    /* Редкое снаряжение */
     { out:'lucky_pebble',   n:1, mats:{ stone:6, crystal_shard:1 },            level:2 },
     { out:'wolf_fang',      n:1, mats:{ bone:4, wolf_pelt:1, leather_strip:2 },level:2 },
     { out:'wolf_cloak',     n:1, mats:{ wolf_pelt:3, leather_strip:4, rope:2 },level:3 },
@@ -244,7 +243,6 @@ window.GAME_DATA = {
     { out:'war_hammer',     n:1, mats:{ iron_ingot:7, plank:3, leather_strip:3 }, level:3 },
     { out:'staff_fire',     n:1, mats:{ plank:3, sulfur:3, coal:4, crystal_shard:2 }, level:3 },
 
-    /* Эпическое */
     { out:'gold_pick',      n:1, mats:{ gold_ingot:4, ember_core:1, crystal_shard:4 }, level:4 },
     { out:'master_sickle',  n:1, mats:{ silver_ingot:3, spider_silk:3, pearl:2 }, level:4 },
     { out:'gold_blade',     n:1, mats:{ gold_ingot:5, crystal_shard:4, leather_strip:3 }, level:4 },
@@ -260,7 +258,6 @@ window.GAME_DATA = {
     { out:'frost_guard',    n:1, mats:{ frost_shard:5, iron_ingot:6, wolf_pelt:2 }, level:4 },
     { out:'frost_charm',    n:1, mats:{ frost_shard:3, silver_ingot:2, pearl:1 }, level:4 },
 
-    /* Легендарное */
     { out:'ember_pick',     n:1, mats:{ ember_ingot:3, gold_ingot:2, crystal_shard:5 }, level:5 },
     { out:'ember_axe',      n:1, mats:{ ember_ingot:4, gold_ingot:2, coal:10 }, level:5 },
     { out:'ember_plate',    n:1, mats:{ ember_ingot:5, leather_strip:8, wolf_pelt:3 }, level:5 },
@@ -270,7 +267,6 @@ window.GAME_DATA = {
     { out:'elixir_power',   n:1, mats:{ ember_core:2, bone:6, empty_vial:1 },   level:5 },
     { out:'elixir_protection',n:1,mats:{ frost_shard:3, iron_ingot:6, empty_vial:1 }, level:5 },
 
-    /* Мифическое */
     { out:'moon_pick',      n:1, mats:{ moon_ingot:3, star_fragment:2, void_shard:1 }, level:6 },
     { out:'void_blade',     n:1, mats:{ void_shard:3, moon_ingot:2, shadow_essence:6 }, level:6 },
     { out:'moon_scepter',   n:1, mats:{ moon_ingot:3, ancient_relic:1, star_fragment:2 }, level:6 },
@@ -280,7 +276,7 @@ window.GAME_DATA = {
     { out:'moon_orb',       n:1, mats:{ moon_dust:3, moon_ingot:2, crystal_shard:8 }, level:6 },
     { out:'void_eye',       n:1, mats:{ void_shard:3, rune_stone:3, moon_ingot:2 }, level:6 },
     { out:'star_lantern',   n:1, mats:{ star_fragment:2, glass:5, moon_ingot:1 }, level:6 },
-    { out:'phoenix_tear',   n:1, mats:{ phoenix_tear:0, star_fragment:2, ember_core:2, moon_dust:2, empty_vial:1 }, level:6 }
+    { out:'phoenix_tear',   n:1, mats:{ star_fragment:2, ember_core:2, moon_dust:2, empty_vial:1 }, level:6 }
   ],
 
   merchantStock: ['bread','apple','fish','torch','healing_potion','stamina_potion','antidote','cloth_vest','wooden_club','stone_axe','stone_pick','gathering_sickle','empty_vial','salt'],
@@ -312,12 +308,12 @@ window.GAME_DATA = {
       unlock:null,
       features:['workbench','merchant','campfire','tent'],
       nodes:[
-        { type:'tree', count:12, tool:'axe', minPower:0, base:{item:'wood',min:1,max:2}, bonus:[{item:'fiber',chance:0.2},{item:'apple',chance:0.08},{item:'resin',chance:0.1}] },
-        { type:'rock', count:9,  tool:'pick', minPower:0, base:{item:'stone',min:1,max:2}, bonus:[{item:'flint',chance:0.15},{item:'clay',chance:0.12},{item:'coal',chance:0.06}] },
-        { type:'bush', count:12, tool:null, minPower:0, base:{item:'fiber',min:1,max:2}, bonus:[{item:'herb',chance:0.3},{item:'mushroom',chance:0.15},{item:'apple',chance:0.1},{item:'berry',chance:0.2}] },
-        { type:'bush', count:5, tool:'sickle', minPower:0, base:{item:'berry',min:1,max:2}, bonus:[{item:'herb',chance:0.3},{item:'feather',chance:0.1}] },
-        { type:'rock', count:4, tool:null, minPower:0, base:{item:'sand',min:1,max:2}, bonus:[{item:'salt',chance:0.15},{item:'pearl',chance:0.015}] },
-        { type:'crystal', count:2, tool:'pick', minPower:3, base:{item:'crystal_shard',min:1,max:1}, bonus:[{item:'crystal_shard',chance:0.15}] }
+        { type:'tree', count:30, tool:'axe', minPower:0, base:{item:'wood',min:1,max:2}, bonus:[{item:'fiber',chance:0.2},{item:'apple',chance:0.08},{item:'resin',chance:0.1}] },
+        { type:'rock', count:22, tool:'pick', minPower:0, base:{item:'stone',min:1,max:2}, bonus:[{item:'flint',chance:0.15},{item:'clay',chance:0.12},{item:'coal',chance:0.06}] },
+        { type:'bush', count:30, tool:null, minPower:0, base:{item:'fiber',min:1,max:2}, bonus:[{item:'herb',chance:0.3},{item:'mushroom',chance:0.15},{item:'apple',chance:0.1},{item:'berry',chance:0.2}] },
+        { type:'bush', count:14, tool:'sickle', minPower:0, base:{item:'berry',min:1,max:2}, bonus:[{item:'herb',chance:0.3},{item:'feather',chance:0.1}] },
+        { type:'rock', count:12, tool:null, minPower:0, base:{item:'sand',min:1,max:2}, bonus:[{item:'salt',chance:0.15},{item:'pearl',chance:0.015}] },
+        { type:'crystal', count:5, tool:'pick', minPower:3, base:{item:'crystal_shard',min:1,max:1}, bonus:[{item:'crystal_shard',chance:0.15}] }
       ],
       enemies:[], hazard:null
     },
@@ -328,12 +324,12 @@ window.GAME_DATA = {
       unlock:{ item:'valley_token', level:1 },
       features:[],
       nodes:[
-        { type:'tree', count:18, tool:'axe', minPower:0, base:{item:'wood',min:1,max:3}, bonus:[{item:'resin',chance:0.2},{item:'fiber',chance:0.25},{item:'feather',chance:0.15},{item:'apple',chance:0.08}] },
-        { type:'bush', count:10, tool:null, minPower:0, base:{item:'fiber',min:1,max:2}, bonus:[{item:'herb',chance:0.35},{item:'mushroom',chance:0.2},{item:'berry',chance:0.25},{item:'spider_silk',chance:0.03}] },
-        { type:'rock', count:6, tool:'pick', minPower:0, base:{item:'stone',min:1,max:2}, bonus:[{item:'coal',chance:0.18},{item:'flint',chance:0.15}] },
-        { type:'ore', count:6, tool:'pick', minPower:1, base:{item:'copper_ore',min:1,max:2}, bonus:[{item:'tin_ore',chance:0.3},{item:'iron_ore',chance:0.08}] }
+        { type:'tree', count:46, tool:'axe', minPower:0, base:{item:'wood',min:1,max:3}, bonus:[{item:'resin',chance:0.2},{item:'fiber',chance:0.25},{item:'feather',chance:0.15},{item:'apple',chance:0.08}] },
+        { type:'bush', count:26, tool:null, minPower:0, base:{item:'fiber',min:1,max:2}, bonus:[{item:'herb',chance:0.35},{item:'mushroom',chance:0.2},{item:'berry',chance:0.25},{item:'spider_silk',chance:0.03}] },
+        { type:'rock', count:16, tool:'pick', minPower:0, base:{item:'stone',min:1,max:2}, bonus:[{item:'coal',chance:0.18},{item:'flint',chance:0.15}] },
+        { type:'ore', count:16, tool:'pick', minPower:1, base:{item:'copper_ore',min:1,max:2}, bonus:[{item:'tin_ore',chance:0.3},{item:'iron_ore',chance:0.08}] }
       ],
-      enemies:[{type:'shadow_wisp',count:5},{type:'wolf',count:4},{type:'spider',count:3}], hazard:null
+      enemies:[{type:'shadow_wisp',count:8},{type:'wolf',count:6},{type:'spider',count:5}], hazard:null
     },
     swamp: {
       name:'Гнилые топи', danger:2, mapX:62, mapY:66, biome:'swamp',
@@ -342,12 +338,12 @@ window.GAME_DATA = {
       unlock:{ level:2, visited:'forest' },
       features:[],
       nodes:[
-        { type:'bush', count:12, tool:null, minPower:0, base:{item:'herb',min:1,max:2}, bonus:[{item:'mushroom',chance:0.3},{item:'fiber',chance:0.3},{item:'venom_sac',chance:0.02}] },
-        { type:'ore', count:6, tool:'pick', minPower:2, base:{item:'silver_ore',min:1,max:1}, bonus:[{item:'swamp_heart',chance:0.03},{item:'pearl',chance:0.05}] },
-        { type:'crystal', count:3, tool:'pick', minPower:2, base:{item:'crystal_shard',min:1,max:1}, bonus:[{item:'swamp_heart',chance:0.04},{item:'venom_sac',chance:0.05}] },
-        { type:'rock', count:5, tool:null, minPower:0, base:{item:'clay',min:1,max:2}, bonus:[{item:'sulfur',chance:0.12},{item:'salt',chance:0.1}] }
+        { type:'bush', count:30, tool:null, minPower:0, base:{item:'herb',min:1,max:2}, bonus:[{item:'mushroom',chance:0.3},{item:'fiber',chance:0.3},{item:'venom_sac',chance:0.02}] },
+        { type:'ore', count:16, tool:'pick', minPower:2, base:{item:'silver_ore',min:1,max:1}, bonus:[{item:'swamp_heart',chance:0.03},{item:'pearl',chance:0.05}] },
+        { type:'crystal', count:8, tool:'pick', minPower:2, base:{item:'crystal_shard',min:1,max:1}, bonus:[{item:'swamp_heart',chance:0.04},{item:'venom_sac',chance:0.05}] },
+        { type:'rock', count:14, tool:null, minPower:0, base:{item:'clay',min:1,max:2}, bonus:[{item:'sulfur',chance:0.12},{item:'salt',chance:0.1}] }
       ],
-      enemies:[{type:'bog_lurker',count:6},{type:'spider',count:4}], hazard:'poison'
+      enemies:[{type:'bog_lurker',count:9},{type:'spider',count:6}], hazard:'poison'
     },
     peaks: {
       name:'Пепельные пики', danger:3, mapX:74, mapY:30, biome:'peaks',
@@ -356,11 +352,11 @@ window.GAME_DATA = {
       unlock:{ level:3, visited:'swamp' },
       features:[],
       nodes:[
-        { type:'ore', count:8, tool:'pick', minPower:3, base:{item:'iron_ore',min:1,max:2}, bonus:[{item:'silver_ore',chance:0.12},{item:'gold_ore',chance:0.04},{item:'sulfur',chance:0.15}] },
-        { type:'rock', count:8, tool:'pick', minPower:0, base:{item:'stone',min:1,max:2}, bonus:[{item:'coal',chance:0.35},{item:'ash',chance:0.3},{item:'flint',chance:0.15}] },
-        { type:'crystal', count:4, tool:'pick', minPower:4, base:{item:'frost_shard',min:1,max:1}, bonus:[{item:'gold_ore',chance:0.06},{item:'ember_core',chance:0.015}] }
+        { type:'ore', count:20, tool:'pick', minPower:3, base:{item:'iron_ore',min:1,max:2}, bonus:[{item:'silver_ore',chance:0.12},{item:'gold_ore',chance:0.04},{item:'sulfur',chance:0.15}] },
+        { type:'rock', count:20, tool:'pick', minPower:0, base:{item:'stone',min:1,max:2}, bonus:[{item:'coal',chance:0.35},{item:'ash',chance:0.3},{item:'flint',chance:0.15}] },
+        { type:'crystal', count:10, tool:'pick', minPower:4, base:{item:'frost_shard',min:1,max:1}, bonus:[{item:'gold_ore',chance:0.06},{item:'ember_core',chance:0.015}] }
       ],
-      enemies:[{type:'ash_golem',count:4},{type:'frost_wraith',count:3}], hazard:'cold'
+      enemies:[{type:'ash_golem',count:6},{type:'frost_wraith',count:5}], hazard:'cold'
     },
     ruins: {
       name:'Лунные руины', danger:4, mapX:88, mapY:52, biome:'ruins',
@@ -369,11 +365,11 @@ window.GAME_DATA = {
       unlock:{ level:5, visited:'peaks' },
       features:[],
       nodes:[
-        { type:'crystal', count:6, tool:'pick', minPower:5, base:{item:'crystal_shard',min:1,max:2}, bonus:[{item:'moon_dust',chance:0.02},{item:'star_fragment',chance:0.012},{item:'gold_ore',chance:0.08}] },
-        { type:'ore', count:5, tool:'pick', minPower:4, base:{item:'silver_ore',min:1,max:1}, bonus:[{item:'gold_ore',chance:0.1},{item:'moon_dust',chance:0.015},{item:'rune_stone',chance:0.04}] },
-        { type:'relic', count:2, tool:'pick', minPower:5, base:{item:'rune_stone',min:1,max:1}, bonus:[{item:'ancient_relic',chance:0.04},{item:'void_shard',chance:0.01}] }
+        { type:'crystal', count:14, tool:'pick', minPower:5, base:{item:'crystal_shard',min:1,max:2}, bonus:[{item:'moon_dust',chance:0.02},{item:'star_fragment',chance:0.012},{item:'gold_ore',chance:0.08}] },
+        { type:'ore', count:12, tool:'pick', minPower:4, base:{item:'silver_ore',min:1,max:1}, bonus:[{item:'gold_ore',chance:0.1},{item:'moon_dust',chance:0.015},{item:'rune_stone',chance:0.04}] },
+        { type:'relic', count:5, tool:'pick', minPower:5, base:{item:'rune_stone',min:1,max:1}, bonus:[{item:'ancient_relic',chance:0.04},{item:'void_shard',chance:0.01}] }
       ],
-      enemies:[{type:'moon_sentinel',count:5},{type:'void_wisp',count:3}], hazard:'arcane'
+      enemies:[{type:'moon_sentinel',count:7},{type:'void_wisp',count:5}], hazard:'arcane'
     }
   },
 
