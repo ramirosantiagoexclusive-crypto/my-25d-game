@@ -533,4 +533,97 @@ function updatePlayer(dt,t){
   if(jumpQueued&&player.grounded){player.vy=9.4;player.grounded=false;Sfx.jump();burst(player.x,.15,player.z,0xc9b98a,8,2,4,.5);}
   jumpQueued=false;
   if(!player.grounded){player.vy-=24*dt;player.y+=player.vy*dt;if(player.y<=0){player.y=0;player.grounded=true;if(player.vy<-4){Sfx.land();player.landT=.18;}player.vy=0;}}
-  if(player.moving){const target
+  if(player.moving){const target=Math.atan2(player.vx,player.vz);let d=target-player.facing;d=Math.atan2(Math.sin(d),Math.cos(d));player.facing+=d*Math.min(1,dt*12);}
+  const P=hero.userData,runF=player.sprinting?1.5:1;if(player.moving&&player.grounded)player.walkPhase+=dt*9*runF;const s=Math.sin(player.walkPhase);
+  if(player.grounded){const amp=player.moving?(player.sprinting?.85:.55):0;P.legL.rotation.x=s*amp;P.legR.rotation.x=-s*amp;P.armL.rotation.x=-s*amp*.8;P.armR.rotation.x=s*amp*.8;if(player.moving&&player.prevSin>0&&s<=0)Sfx.step();player.prevSin=s;}
+  else{P.legL.rotation.x=.55;P.legR.rotation.x=-.35;P.armL.rotation.x=-2.5;P.armR.rotation.x=-2.5;}
+  P.body.scale.y=1+Math.sin(t*2.2)*.015;P.tail.rotation.x=-.25-(player.moving?(player.sprinting?.75:.4):0)+Math.sin(t*6)*.12;
+  if(player.landT>0){player.landT-=dt;const q=Math.max(player.landT,0)/.18;hero.scale.set(1+q*.12,1-q*.15,1+q*.12);}else hero.scale.set(1,1,1);
+  hero.position.set(player.x,player.y+(player.moving&&player.grounded?Math.abs(s)*.07:0),player.z);hero.rotation.y=player.facing;
+  hero.userData.lantern.intensity=st.light*.03;
+  hero.visible=player.invuln>0?Math.floor(t*12)%2===0:true;
+}
+
+/* ==================== КАМЕРА / НЕБО ==================== */
+const camTarget=new THREE.Vector3();
+function updateCamera(dt){
+  camYaw+=(camYawT-camYaw)*Math.min(1,dt*8);const dist=22;
+  camTarget.set(player.x+Math.sin(camYaw)*dist,18,player.z+Math.cos(camYaw)*dist);
+  camera.position.lerp(camTarget,1-Math.exp(-6*dt));camera.lookAt(player.x,player.y+1,player.z);
+  const aspect=innerWidth/innerHeight;camera.left=-frustum*aspect/2;camera.right=frustum*aspect/2;camera.top=frustum/2;camera.bottom=-frustum/2;camera.updateProjectionMatrix();
+  sun.position.set(player.x+12,18,player.z+8);sun.target.position.set(player.x,0,player.z);
+}
+let skyTimer=0;
+function updateSky(dt){
+  dayTime=(dayTime+dt/300)%1;const elev=Math.sin((dayTime-.25)*TAU),day=clamp(elev*1.5+.12,0,1);
+  sun.intensity=.18+day*1.4;sun.color.set(0x7f9fd9).lerp(new THREE.Color(0xffd9a0),day);hemi.intensity=.22+day*.4;
+  const loc=D.locations[S.location];const top=new THREE.Color(loc.skyNight).lerp(new THREE.Color(0x6db3d9),day);
+  skyTimer-=dt;if(skyTimer<=0){skyTimer=.5;const c=document.createElement('canvas');c.width=256;c.height=256;const g=c.getContext('2d');const gr=g.createLinearGradient(0,0,0,256);gr.addColorStop(0,'#'+top.getHexString());gr.addColorStop(1,'#'+new THREE.Color(loc.skyDay).lerp(new THREE.Color(0xff9f43),clamp(1-Math.abs(elev)*3,0,1)*.4).getHexString());g.fillStyle=gr;g.fillRect(0,0,256,256);const tex=new THREE.CanvasTexture(c);tex.colorSpace=THREE.SRGBColorSpace;scene.background=tex;}
+}
+
+/* ==================== ВВОД ==================== */
+window.addEventListener('keydown',e=>{
+  if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();
+  keys[e.code]=true;if(e.repeat)return;
+  if(e.code==='Space'&&state==='playing'&&!activePanel)jumpQueued=true;
+  if(e.code==='KeyE'&&state==='playing'&&!activePanel)interactQueued=true;
+  if(e.code==='KeyF'&&state==='playing'&&!activePanel)attackQueued=true;
+  if(e.code==='KeyI'&&state!=='intro'&&state!=='dead')openPanel(activePanel==='inv'?null:'inv');
+  if(e.code==='KeyM'&&state!=='intro'&&state!=='dead'){selectedMap=S.location;openPanel(activePanel==='map'?null:'map');}
+  if(e.code==='Escape'){if(activePanel&&activePanel!=='intro'&&activePanel!=='death')closePanel();else if(state==='playing'){state='paused';openPanel('pause');}else if(state==='paused'){state='playing';closePanel();}}
+});
+window.addEventListener('keyup',e=>{keys[e.code]=false;});
+$('btnStart').addEventListener('click',()=>{if(hasSave){S=freshState();store.del(SAVE_KEY);}world=buildLocation('valley');startGame();});
+$('btnContinue').addEventListener('click',()=>{world=buildLocation(S.location);startGame();});
+$('btnResume').addEventListener('click',()=>{state='playing';closePanel();});
+$('btnNewGame').addEventListener('click',()=>{S=freshState();store.del(SAVE_KEY);world=buildLocation('valley');state='playing';closePanel();toast('Новая игра.');});
+$('btnRespawn').addEventListener('click',respawn);
+$('btnInv').addEventListener('click',()=>openPanel(activePanel==='inv'?null:'inv'));
+$('btnMap').addEventListener('click',()=>{selectedMap=S.location;openPanel(activePanel==='map'?null:'map');});
+$('btnSound').addEventListener('click',()=>{Sfx.ensure();Sfx.setMuted(!Sfx.muted);});
+$('btnPause').addEventListener('click',()=>{if(state==='playing'){state='paused';openPanel('pause');}else if(state==='paused'){state='playing';closePanel();}});
+$('btnInvClose').addEventListener('click',closePanel);
+$('btnCraftClose').addEventListener('click',closePanel);
+$('btnTradeClose').addEventListener('click',closePanel);
+$('btnMapClose').addEventListener('click',closePanel);
+$('btnTravel').addEventListener('click',()=>{closePanel();travel(selectedMap);});
+document.querySelectorAll('.trade-tab').forEach(b=>b.addEventListener('click',()=>{tradeTab=b.dataset.tab;document.querySelectorAll('.trade-tab').forEach(x=>x.classList.toggle('active',x===b));renderTrade();}));
+$('btnJump').addEventListener('pointerdown',e=>{e.preventDefault();jumpQueued=true;});
+$('btnInteract').addEventListener('pointerdown',e=>{e.preventDefault();interactQueued=true;});
+$('btnAttack').addEventListener('pointerdown',e=>{e.preventDefault();attackQueued=true;});
+const spBtn=$('btnSprint');spBtn.addEventListener('pointerdown',e=>{e.preventDefault();sprintTouch=true;});
+['pointerup','pointercancel','pointerleave'].forEach(ev=>spBtn.addEventListener(ev,()=>sprintTouch=false));
+const joyBase=$('joyBase'),joyKnob=$('joyKnob');
+function joyMove(e){const r=joyBase.getBoundingClientRect();let dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2);const d=Math.hypot(dx,dy),max=40;if(d>max){dx=dx/d*max;dy=dy/d*max;}joy.x=dx/max;joy.y=dy/max;joyKnob.style.transform=`translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;}
+joyBase.addEventListener('pointerdown',e=>{joy.id=e.pointerId;joyBase.setPointerCapture(e.pointerId);joyMove(e);});
+joyBase.addEventListener('pointermove',e=>{if(e.pointerId===joy.id)joyMove(e);});
+function joyEnd(e){if(e.pointerId===joy.id){joy.id=null;joy.x=joy.y=0;joyKnob.style.transform='translate(-50%,-50%)';}}
+joyBase.addEventListener('pointerup',joyEnd);joyBase.addEventListener('pointercancel',joyEnd);
+let dragging=false,lastX=0;
+renderer.domElement.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'){dragging=true;lastX=e.clientX;}});
+window.addEventListener('pointermove',e=>{if(dragging){camYawT-=(e.clientX-lastX)*.006;lastX=e.clientX;}});
+window.addEventListener('pointerup',()=>dragging=false);
+renderer.domElement.addEventListener('wheel',e=>{e.preventDefault();frustum=clamp(frustum+e.deltaY*.01,7,15);},{passive:false});
+window.addEventListener('resize',()=>renderer.setSize(innerWidth,innerHeight));
+window.addEventListener('blur',()=>{if(state==='playing'&&!activePanel){state='paused';openPanel('pause');}});
+
+/* ==================== ЦИКЛ ==================== */
+const clock=new THREE.Clock();let firstFrame=true;
+function animate(){
+  requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05),t=clock.elapsedTime;
+  if(state==='playing'&&!activePanel){
+    S.playTime+=dt;updatePlayer(dt,t);updateInteractions();updateWorld(dt,t);
+    if(attackQueued){attackQueued=false;playerAttack();}
+    renderHUD();renderQuest();saveTimer+=dt;if(saveTimer>3){saveTimer=0;save();}
+  } else if(state==='intro'){camYawT+=dt*.05;}
+  updateSky(dt);updateParticles(dt);updateCamera(dt);renderer.render(scene,camera);
+  if(firstFrame){firstFrame=false;window.__fmReady=true;$('boot').classList.add('hide');setTimeout(()=>$('boot').remove(),600);}
+}
+
+/* ==================== СТАРТ ==================== */
+if(hasSave){$('btnContinue').style.display='';$('introSaveInfo').textContent='Сохранение: уровень '+S.level+' · '+S.coins+' монет · '+D.locations[S.location].name;}
+world=buildLocation(S.location);
+player.x=0;player.z=5;
+openPanel('intro');
+renderAll();
+animate();
