@@ -1,5 +1,5 @@
 /* =====================================================================
-   БАЗА КОНТЕНТА. Уголь — базовый ресурс, названия без «лунной руды».
+   БАЗА КОНТЕНТА. Оружие — огнестрел (Minigore-style), мобы для волн.
    ===================================================================== */
 window.GAME_DATA = {
   rarities: {
@@ -15,7 +15,7 @@ window.GAME_DATA = {
     resource: { name:'Ресурс',    icon:'⛏️', color:'#9fb8a0', purpose:'Сырьё для крафта.' },
     material: { name:'Материал',  icon:'🧱', color:'#c9b98a', purpose:'Заготовка для крафта.' },
     tool:     { name:'Инструмент',icon:'⛏️', color:'#7ee081', purpose:'Слот «Инструмент». Нужен для добычи.' },
-    weapon:   { name:'Оружие',    icon:'⚔️', color:'#ff5a5f', purpose:'Слот «Оружие». Атака в бою.' },
+    weapon:   { name:'Оружие',    icon:'🔫', color:'#ff5a5f', purpose:'Слот «Оружие». Стреляет в бою.' },
     armor:    { name:'Броня',     icon:'🛡️', color:'#6fc3ff', purpose:'Слот «Броня». Защита и сопротивления.' },
     charm:    { name:'Амулет',    icon:'🧿', color:'#b48cff', purpose:'Слот «Амулет». Пассивные бонусы.' },
     light:    { name:'Свет',      icon:'💡', color:'#ffd166', purpose:'Слот «Свет». Освещает ночью.' },
@@ -95,23 +95,13 @@ window.GAME_DATA = {
     ember_pick:     { name:'Кирка из закалённой стали', cat:'tool', slot:'tool', rarity:'legendary', icon:'⛏️', value:420, weight:3, desc:'Для высшей руды.', gatherType:'pick', gatherPower:5, luck:14 },
     moon_pick:      { name:'Платиновая кирка', cat:'tool', slot:'tool', rarity:'mythic',   icon:'⛏️', value:760, weight:2.4, desc:'Добывает то, что скрыто от других.', gatherType:'pick', gatherPower:6, luck:20 },
 
-    wooden_club:    { name:'Деревянная дубина',cat:'weapon', slot:'weapon', rarity:'common',   icon:'🏏', value:12,  weight:2,   desc:'Простое оружие ближнего боя.', atk:3 },
-    spear:          { name:'Копьё',            cat:'weapon', slot:'weapon', rarity:'common',   icon:'🔱', value:20,  weight:2.2, desc:'Длинное и дешёвое.', atk:4, speed:0.2 },
-    copper_sword:   { name:'Медный меч',       cat:'weapon', slot:'weapon', rarity:'uncommon', icon:'🗡️', value:45,  weight:2.3, desc:'Первый настоящий клинок.', atk:6 },
-    bronze_sword:   { name:'Бронзовый меч',    cat:'weapon', slot:'weapon', rarity:'uncommon', icon:'🗡️', value:60,  weight:2.4, desc:'Крепче медного.', atk:8 },
-    staff_apprentice:{name:'Посох ученика',    cat:'weapon', slot:'weapon', rarity:'uncommon', icon:'🪄', value:55,  weight:1.6, desc:'Слабая магия, но дальнобойнее.', atk:7, light:6 },
-    war_hammer:     { name:'Боевой молот',     cat:'weapon', slot:'weapon', rarity:'rare',     icon:'🔨', value:120, weight:3.5, desc:'Медленный, но сокрушительный.', atk:13, speed:-0.3 },
-    iron_sword:     { name:'Железный меч',     cat:'weapon', slot:'weapon', rarity:'uncommon', icon:'🗡️', value:80,  weight:2.5, desc:'Надёжный клинок.', atk:10 },
-    steel_sword:    { name:'Стальной меч',     cat:'weapon', slot:'weapon', rarity:'rare',     icon:'⚔️', value:160, weight:2.5, desc:'Отличная сталь.', atk:15 },
-    silver_blade:   { name:'Серебряный клинок',cat:'weapon', slot:'weapon', rarity:'rare',     icon:'⚔️', value:190, weight:2.2, desc:'Эффективен против нежити.', atk:16, luck:3 },
-    staff_fire:     { name:'Посох огня',       cat:'weapon', slot:'weapon', rarity:'rare',     icon:'🪄', value:200, weight:1.8, desc:'Пышет жаром.', atk:17, warmth:15, light:12 },
-    gold_blade:     { name:'Золотой клинок',   cat:'weapon', slot:'weapon', rarity:'epic',     icon:'⚔️', value:320, weight:2.4, desc:'Роскошь и сила.', atk:20, luck:6 },
-    shadow_dagger:  { name:'Кинжал теней',     cat:'weapon', slot:'weapon', rarity:'epic',     icon:'🔪', value:300, weight:1.2, desc:'Быстрый и смертоносный.', atk:19, speed:0.8 },
-    frost_edge:     { name:'Хрустальный клинок',cat:'weapon',slot:'weapon', rarity:'epic',     icon:'🗡️', value:330, weight:2.3, desc:'Обмораживает врагов.', atk:21, coldResist:20 },
-    staff_frost:    { name:'Посох мороза',     cat:'weapon', slot:'weapon', rarity:'epic',     icon:'🪄', value:340, weight:1.8, desc:'Власть над холодом.', atk:22, coldResist:30, light:10 },
-    ember_axe:      { name:'Секира из закалённой стали', cat:'weapon', slot:'weapon', rarity:'legendary', icon:'🪓', value:560, weight:3.5, desc:'Тяжёлая секира.', atk:27, warmth:30 },
-    void_blade:     { name:'Алмазный клинок',  cat:'weapon', slot:'weapon', rarity:'mythic',   icon:'🗡️', value:950, weight:2,   desc:'Режет почти всё.', atk:34, luck:8 },
-    moon_scepter:   { name:'Скипетр хранителя',cat:'weapon', slot:'weapon', rarity:'mythic',   icon:'🔱', value:1100,weight:2,   desc:'Оружие хранителей руин.', atk:32, light:35, luck:6 },
+    /* ---------- ОГНЕСТРЕЛ (Minigore-style) ---------- */
+    pistol:   { name:'Пистолет',          cat:'weapon', slot:'weapon', rarity:'common',   icon:'🔫', value:30,  weight:2,   desc:'Надёжный ствол. Бесконечный запас патронов.', atk:8,  gun:{ dmg:9,  rate:5,  spread:.03, pellets:1, speed:30, mag:12, reload:1.0, pierce:0, color:0xffd166 } },
+    shotgun:  { name:'Дробовик',          cat:'weapon', slot:'weapon', rarity:'uncommon', icon:'🔫', value:90,  weight:3,   desc:'Веер дроби в упор.', atk:14, gun:{ dmg:7,  rate:1.5,spread:.24, pellets:6, speed:24, mag:6,  reload:1.4, pierce:0, color:0xff9f43 } },
+    smg:      { name:'Пистолет-пулемёт',  cat:'weapon', slot:'weapon', rarity:'rare',     icon:'🔫', value:180, weight:2.6, desc:'Высокая скорострельность.', atk:18, gun:{ dmg:6,  rate:11, spread:.08, pellets:1, speed:32, mag:32, reload:1.2, pierce:0, color:0x6fc3ff } },
+    rifle:    { name:'Винтовка',          cat:'weapon', slot:'weapon', rarity:'epic',     icon:'🔫', value:320, weight:3,   desc:'Пробивает несколько целей.', atk:26, gun:{ dmg:26, rate:2.2,spread:.012,pellets:1, speed:46, mag:8,  reload:1.3, pierce:2, color:0x7ee081 } },
+    minigun:  { name:'Пулемёт',           cat:'weapon', slot:'weapon', rarity:'legendary',icon:'🔫', value:620, weight:4.5, desc:'Шквал огня. Долгая перезарядка.', atk:34, gun:{ dmg:7,  rate:17, spread:.11, pellets:1, speed:34, mag:90, reload:2.3, pierce:1, color:0xff5a7a } },
+    plasma:   { name:'Плазмомёт',         cat:'weapon', slot:'weapon', rarity:'mythic',   icon:'🔫', value:1100,weight:3.5, desc:'Сгустки плазмы, пробивающие всё.', atk:44, gun:{ dmg:20, rate:7,  spread:.05, pellets:2, speed:38, mag:40, reload:1.6, pierce:4, color:0xb48cff } },
 
     cloth_vest:     { name:'Тканевый жилет',   cat:'armor', slot:'armor', rarity:'common',   icon:'🧥', value:18,  weight:1.5, desc:'Минимальная защита.', def:2 },
     padded_armor:   { name:'Стёганая броня',   cat:'armor', slot:'armor', rarity:'common',   icon:'🦺', value:30,  weight:2,   desc:'Мягкая, но держит удар.', def:4, maxStamina:5 },
@@ -190,27 +180,24 @@ window.GAME_DATA = {
     { out:'stone_axe',      n:1, mats:{ wood:3, stone:2 },                     level:1 },
     { out:'stone_pick',     n:1, mats:{ wood:3, stone:3 },                     level:1 },
     { out:'gathering_sickle',n:1,mats:{ wood:2, stone:1, fiber:2 },            level:1 },
-    { out:'wooden_club',    n:1, mats:{ wood:4 },                              level:1 },
-    { out:'spear',          n:1, mats:{ wood:3, flint:1, rope:1 },             level:1 },
     { out:'torch',          n:1, mats:{ wood:1, fiber:2, resin:1 },            level:1 },
     { out:'cloth_vest',     n:1, mats:{ cloth:3, rope:1 },                     level:1 },
     { out:'padded_armor',   n:1, mats:{ cloth:5, leather_strip:2 },            level:1 },
     { out:'valley_token',   n:1, mats:{ wood:6, stone:6, fiber:6 },            level:1 },
 
+    { out:'pistol',         n:1, mats:{ iron_ingot:2, plank:1, leather_strip:1 }, level:2 },
+    { out:'shotgun',        n:1, mats:{ iron_ingot:3, plank:2, coal:2 },       level:2 },
+    { out:'smg',            n:1, mats:{ iron_ingot:4, bronze_ingot:2, glass:1 }, level:3 },
+    { out:'rifle',          n:1, mats:{ steel_sword:0, iron_ingot:6, silver_ingot:2, glass:2 }, level:4 },
+    { out:'minigun',        n:1, mats:{ ember_ingot:3, gold_ingot:2, iron_ingot:8 }, level:5 },
+    { out:'plasma',         n:1, mats:{ moon_ingot:2, void_shard:2, crystal_shard:6 }, level:6 },
+
     { out:'copper_axe',     n:1, mats:{ copper_ore:3, plank:2, rope:1 },       level:2 },
     { out:'copper_pick',    n:1, mats:{ copper_ore:3, plank:2, rope:1 },       level:2 },
-    { out:'copper_sword',   n:1, mats:{ bronze_ingot:2, plank:1, leather_strip:1 }, level:2 },
-    { out:'copper_mail',    n:1, mats:{ bronze_ingot:3, leather_strip:2 },     level:2 },
-    { out:'copper_ring',    n:1, mats:{ bronze_ingot:1, crystal_shard:1 },     level:2 },
     { out:'bronze_axe',     n:1, mats:{ bronze_ingot:3, plank:2, rope:1 },     level:2 },
     { out:'bronze_pick',    n:1, mats:{ bronze_ingot:3, plank:2, rope:1 },     level:2 },
-    { out:'bronze_sword',   n:1, mats:{ bronze_ingot:3, plank:1, leather_strip:1 }, level:2 },
-    { out:'bronze_mail',    n:1, mats:{ bronze_ingot:4, leather_strip:3 },     level:2 },
-    { out:'staff_apprentice',n:1,mats:{ plank:3, crystal_shard:1, rope:1 },    level:2 },
     { out:'iron_axe',       n:1, mats:{ iron_ingot:3, plank:2, rope:1 },       level:3 },
     { out:'iron_pick',      n:1, mats:{ iron_ingot:4, plank:2, rope:1 },       level:3 },
-    { out:'iron_sword',     n:1, mats:{ iron_ingot:4, plank:1, leather_strip:2 }, level:3 },
-    { out:'iron_mail',      n:1, mats:{ iron_ingot:6, leather_strip:4 },       level:3 },
     { out:'leather_armor',  n:1, mats:{ leather:5, leather_strip:3, rope:2 },  level:2 },
     { out:'oil_lamp',       n:1, mats:{ glass:1, resin:2, rope:1 },            level:2 },
     { out:'lantern',        n:1, mats:{ iron_ingot:2, glass:2, coal:2 },       level:3 },
@@ -237,20 +224,15 @@ window.GAME_DATA = {
     { out:'firefly_lantern',n:1, mats:{ crystal_shard:4, glass:2, rope:2 },    level:3 },
     { out:'silver_sickle',  n:1, mats:{ silver_ingot:3, plank:2, crystal_shard:2 }, level:3 },
     { out:'silver_pick',    n:1, mats:{ silver_ingot:4, plank:2, rope:1 },     level:3 },
-    { out:'silver_blade',   n:1, mats:{ silver_ingot:5, crystal_shard:3, leather_strip:2 }, level:3 },
-    { out:'steel_sword',    n:1, mats:{ iron_ingot:6, coal:6, leather_strip:2 }, level:3 },
+    { out:'copper_mail',    n:1, mats:{ bronze_ingot:3, leather_strip:2 },     level:2 },
+    { out:'bronze_mail',    n:1, mats:{ bronze_ingot:4, leather_strip:3 },     level:2 },
+    { out:'iron_mail',      n:1, mats:{ iron_ingot:6, leather_strip:4 },       level:3 },
     { out:'steel_mail',     n:1, mats:{ iron_ingot:8, leather_strip:5, coal:6 }, level:3 },
-    { out:'war_hammer',     n:1, mats:{ iron_ingot:7, plank:3, leather_strip:3 }, level:3 },
-    { out:'staff_fire',     n:1, mats:{ plank:3, sulfur:3, coal:4, crystal_shard:2 }, level:3 },
 
     { out:'gold_pick',      n:1, mats:{ gold_ingot:4, ember_core:1, crystal_shard:4 }, level:4 },
     { out:'master_sickle',  n:1, mats:{ silver_ingot:3, spider_silk:3, pearl:2 }, level:4 },
-    { out:'gold_blade',     n:1, mats:{ gold_ingot:5, crystal_shard:4, leather_strip:3 }, level:4 },
     { out:'gold_ring',      n:1, mats:{ gold_ingot:2, pearl:2, crystal_shard:2 }, level:4 },
     { out:'gold_plate',     n:1, mats:{ gold_ingot:7, leather_strip:6, crystal_shard:3 }, level:4 },
-    { out:'shadow_dagger',  n:1, mats:{ shadow_essence:4, silver_ingot:3, bone:4 }, level:4 },
-    { out:'frost_edge',     n:1, mats:{ frost_shard:4, silver_ingot:4, crystal_shard:3 }, level:4 },
-    { out:'staff_frost',    n:1, mats:{ frost_shard:4, crystal_shard:4, plank:3 }, level:4 },
     { out:'spider_silk_robe',n:1,mats:{ spider_silk:6, cloth:6, rope:3 },       level:4 },
     { out:'swamp_cloak',    n:1, mats:{ swamp_heart:3, leather:6, spider_silk:3 }, level:4 },
     { out:'swamp_talisman', n:1, mats:{ swamp_heart:2, venom_sac:3, bone:4 },  level:4 },
@@ -259,7 +241,6 @@ window.GAME_DATA = {
     { out:'frost_charm',    n:1, mats:{ frost_shard:3, silver_ingot:2, pearl:1 }, level:4 },
 
     { out:'ember_pick',     n:1, mats:{ ember_ingot:3, gold_ingot:2, crystal_shard:5 }, level:5 },
-    { out:'ember_axe',      n:1, mats:{ ember_ingot:4, gold_ingot:2, coal:10 }, level:5 },
     { out:'ember_plate',    n:1, mats:{ ember_ingot:5, leather_strip:8, wolf_pelt:3 }, level:5 },
     { out:'ember_sigil',    n:1, mats:{ ember_ingot:2, gold_ingot:3, sulfur:5 }, level:5 },
     { out:'ember_lantern',  n:1, mats:{ ember_ingot:2, glass:4, sulfur:4 },     level:5 },
@@ -268,9 +249,6 @@ window.GAME_DATA = {
     { out:'elixir_protection',n:1,mats:{ frost_shard:3, iron_ingot:6, empty_vial:1 }, level:5 },
 
     { out:'moon_pick',      n:1, mats:{ moon_ingot:3, star_fragment:2, void_shard:1 }, level:6 },
-    { out:'void_blade',     n:1, mats:{ void_shard:3, moon_ingot:2, shadow_essence:6 }, level:6 },
-    { out:'moon_scepter',   n:1, mats:{ moon_ingot:3, ancient_relic:1, star_fragment:2 }, level:6 },
-    { out:'void_mantle',    n:1, mats:{ void_shard:4, spider_silk:8, moon_ingot:2 }, level:6 },
     { out:'moon_veil',      n:1, mats:{ moon_ingot:3, spider_silk:6, pearl:4 }, level:6 },
     { out:'star_charm',     n:1, mats:{ star_fragment:3, gold_ingot:3, pearl:3 }, level:6 },
     { out:'moon_orb',       n:1, mats:{ moon_dust:3, moon_ingot:2, crystal_shard:8 }, level:6 },
@@ -279,32 +257,38 @@ window.GAME_DATA = {
     { out:'phoenix_tear',   n:1, mats:{ star_fragment:2, ember_core:2, moon_dust:2, empty_vial:1 }, level:6 }
   ],
 
-  merchantStock: ['bread','apple','fish','torch','coal','healing_potion','stamina_potion','antidote','cloth_vest','wooden_club','stone_axe','stone_pick','gathering_sickle','empty_vial','salt'],
+  merchantStock: ['bread','apple','fish','torch','coal','pistol','shotgun','healing_potion','stamina_potion','antidote','cloth_vest','stone_axe','stone_pick','gathering_sickle','empty_vial','salt'],
 
   enemies: {
-    shadow_wisp: { name:'Лесная тень', hp:24, atk:5, speed:2.7, xp:22, coins:[1,4], color:0x7a2bd6, size:0.7,
-      loot:[{item:'shadow_essence',chance:0.07},{item:'bone',chance:0.25},{item:'fiber',chance:0.3}] },
-    wolf:        { name:'Волк', hp:34, atk:7, speed:3.4, xp:30, coins:[2,5], color:0x5a5a66, size:0.9,
-      loot:[{item:'leather',chance:0.4},{item:'meat',chance:0.5},{item:'bone',chance:0.3},{item:'wolf_pelt',chance:0.08},{item:'wolf_fang',chance:0.04}] },
-    spider:      { name:'Лесной паук', hp:28, atk:6, speed:3.0, xp:26, coins:[1,4], color:0x3a3a2a, size:0.8, poison:true,
-      loot:[{item:'spider_silk',chance:0.14},{item:'venom_sac',chance:0.08},{item:'bone',chance:0.2}] },
-    bog_lurker:  { name:'Топяник', hp:46, atk:9, speed:2.4, xp:42, coins:[3,7], color:0x3f7a3a, size:1.0, poison:true,
-      loot:[{item:'swamp_heart',chance:0.06},{item:'venom_sac',chance:0.12},{item:'herb',chance:0.4},{item:'mushroom',chance:0.3},{item:'pearl',chance:0.04}] },
-    ash_golem:   { name:'Пепельный голем', hp:70, atk:13, speed:1.9, xp:60, coins:[5,10], color:0x8a4a2a, size:1.3,
-      loot:[{item:'ember_core',chance:0.035},{item:'iron_ore',chance:0.5},{item:'coal',chance:0.6},{item:'sulfur',chance:0.25},{item:'ash',chance:0.4}] },
-    frost_wraith:{ name:'Ледяной призрак', hp:52, atk:11, speed:3.1, xp:52, coins:[4,8], color:0x6fc3ff, size:0.9,
-      loot:[{item:'frost_shard',chance:0.1},{item:'crystal_shard',chance:0.12},{item:'silver_ore',chance:0.2},{item:'ember_core',chance:0.02}] },
-    moon_sentinel:{name:'Каменный страж', hp:95, atk:17, speed:2.6, xp:90, coins:[8,15], color:0xb48cff, size:1.4,
-      loot:[{item:'moon_dust',chance:0.025},{item:'ancient_relic',chance:0.006},{item:'gold_ore',chance:0.15},{item:'crystal_shard',chance:0.3},{item:'rune_stone',chance:0.08}] },
-    void_wisp:   { name:'Тёмный призрак', hp:80, atk:15, speed:3.3, xp:80, coins:[6,12], color:0x2a1a4a, size:1.0,
-      loot:[{item:'void_shard',chance:0.03},{item:'star_fragment',chance:0.02},{item:'shadow_essence',chance:0.15},{item:'rune_stone',chance:0.1}] }
+    grunt:       { name:'Мелкий пакостник', hp:16, atk:6,  speed:3.1, xp:14, coins:[1,3], color:0x8bc34a, size:0.75, kind:'blob',
+      loot:[{item:'fiber',chance:0.3},{item:'herb',chance:0.2},{item:'bone',chance:0.15}] },
+    runner:      { name:'Быстрый бегун',  hp:12, atk:5,  speed:5.2, xp:16, coins:[1,3], color:0xffb347, size:0.65, kind:'blob',
+      loot:[{item:'fiber',chance:0.25},{item:'meat',chance:0.2}] },
+    brute:       { name:'Толстяк',        hp:52, atk:12, speed:2.0, xp:34, coins:[3,6], color:0x9c6b4a, size:1.25, kind:'brute',
+      loot:[{item:'leather',chance:0.4},{item:'meat',chance:0.4},{item:'bone',chance:0.3}] },
+    spitter:     { name:'Плевун',         hp:22, atk:7,  speed:2.4, xp:24, coins:[2,4], color:0x6fc3ff, size:0.85, kind:'spitter', ranged:true,
+      loot:[{item:'venom_sac',chance:0.15},{item:'herb',chance:0.3}] },
+    spider:      { name:'Паук',           hp:20, atk:6,  speed:3.6, xp:20, coins:[1,4], color:0x4a4a3a, size:0.8, kind:'spider', poison:true,
+      loot:[{item:'spider_silk',chance:0.18},{item:'venom_sac',chance:0.1}] },
+    wolf:        { name:'Волк',           hp:26, atk:8,  speed:4.4, xp:26, coins:[2,5], color:0x6a6a76, size:0.95, kind:'wolf',
+      loot:[{item:'leather',chance:0.4},{item:'meat',chance:0.5},{item:'wolf_pelt',chance:0.1}] },
+    lurker:      { name:'Топяник',        hp:40, atk:10, speed:2.6, xp:36, coins:[3,7], color:0x4f8a4a, size:1.05, kind:'brute', poison:true,
+      loot:[{item:'swamp_heart',chance:0.08},{item:'venom_sac',chance:0.15},{item:'pearl',chance:0.05}] },
+    golem:       { name:'Голем',          hp:90, atk:16, speed:1.7, xp:60, coins:[5,10], color:0x8a5a3a, size:1.5, kind:'golem',
+      loot:[{item:'ember_core',chance:0.05},{item:'iron_ore',chance:0.5},{item:'coal',chance:0.6}] },
+    wraith:      { name:'Призрак',        hp:44, atk:12, speed:3.4, xp:48, coins:[4,8], color:0x9fdcff, size:0.95, kind:'wraith',
+      loot:[{item:'frost_shard',chance:0.12},{item:'crystal_shard',chance:0.15}] },
+    sentinel:    { name:'Страж',          hp:120,atk:20, speed:2.2, xp:90, coins:[8,15], color:0xb48cff, size:1.55, kind:'golem',
+      loot:[{item:'moon_dust',chance:0.04},{item:'ancient_relic',chance:0.01},{item:'gold_ore',chance:0.2},{item:'rune_stone',chance:0.1}] },
+    shade:       { name:'Тень',           hp:60, atk:15, speed:3.8, xp:70, coins:[6,12], color:0x3a2a5a, size:1.0, kind:'wraith',
+      loot:[{item:'void_shard',chance:0.05},{item:'star_fragment',chance:0.03},{item:'shadow_essence',chance:0.2}] }
   },
 
   locations: {
     valley: {
       name:'Долина Светлячков', danger:0, mapX:18, mapY:64, biome:'meadow',
-      ground:[0x4c9a55,0x63b168], skyDay:0x9fd3c0, skyNight:0x0d1b33,
-      desc:'Безопасный стартовый хаб. Здесь учатся добыче, крафту и торговле.',
+      ground:[0x5aa860,0x74c077], skyDay:0x9fd3c0, skyNight:0x0d1b33,
+      desc:'Безопасный дом. Крафт, торговля, тренировочные мишени.',
       unlock:null, features:['workbench','merchant','campfire','tent'],
       nodes:[
         { type:'tree', count:30, tool:'axe', minPower:0, base:{item:'wood',min:1,max:2}, bonus:[{item:'fiber',chance:0.2},{item:'apple',chance:0.08},{item:'resin',chance:0.18}] },
@@ -315,12 +299,12 @@ window.GAME_DATA = {
         { type:'rock', count:12, tool:null, minPower:0, base:{item:'sand',min:1,max:2}, bonus:[{item:'salt',chance:0.2},{item:'pearl',chance:0.02}] },
         { type:'crystal', count:5, tool:'pick', minPower:3, base:{item:'crystal_shard',min:1,max:1}, bonus:[{item:'crystal_shard',chance:0.15}] }
       ],
-      enemies:[], hazard:null
+      enemies:[], hazard:null, waves:[]
     },
     forest: {
       name:'Тёмный лес', danger:1, mapX:40, mapY:42, biome:'forest',
-      ground:[0x2f5a3a,0x3f7048], skyDay:0x5f8f7a, skyNight:0x07140f,
-      desc:'Волки, пауки и лесные тени. Кожа, кости и тёмный порошок.',
+      ground:[0x3f7a48,0x4f8f55], skyDay:0x6f9f7a, skyNight:0x07140f,
+      desc:'Волны мелких тварей. Кожа, кости, мясо.',
       unlock:{ item:'valley_token', level:1 }, features:[],
       nodes:[
         { type:'tree', count:46, tool:'axe', minPower:0, base:{item:'wood',min:1,max:3}, bonus:[{item:'resin',chance:0.25},{item:'fiber',chance:0.25},{item:'feather',chance:0.15},{item:'apple',chance:0.08}] },
@@ -329,12 +313,19 @@ window.GAME_DATA = {
         { type:'coal', count:12, tool:'pick', minPower:0, base:{item:'coal',min:2,max:3}, bonus:[{item:'stone',chance:0.3},{item:'sulfur',chance:0.08}] },
         { type:'ore', count:16, tool:'pick', minPower:1, base:{item:'copper_ore',min:1,max:2}, bonus:[{item:'tin_ore',chance:0.35},{item:'iron_ore',chance:0.12}] }
       ],
-      enemies:[{type:'shadow_wisp',count:8},{type:'wolf',count:6},{type:'spider',count:5}], hazard:null
+      enemies:[], hazard:null,
+      waves:[
+        [{type:'grunt',count:6}],
+        [{type:'grunt',count:8},{type:'runner',count:3}],
+        [{type:'grunt',count:8},{type:'runner',count:4},{type:'wolf',count:2}],
+        [{type:'wolf',count:5},{type:'spider',count:4},{type:'brute',count:1}],
+        [{type:'grunt',count:12},{type:'wolf',count:4},{type:'brute',count:2}]
+      ]
     },
     swamp: {
       name:'Гнилые топи', danger:2, mapX:62, mapY:66, biome:'swamp',
-      ground:[0x3f5a35,0x556b3a], skyDay:0x6f8f5a, skyNight:0x0a140a,
-      desc:'Ядовитые лужи и топяники. Болотная смола, яд и серебро.',
+      ground:[0x4f6a3f,0x657f4a], skyDay:0x7f9f5a, skyNight:0x0a140a,
+      desc:'Яд, плевуны и топяники. Болотная смола и серебро.',
       unlock:{ level:2, visited:'forest' }, features:[],
       nodes:[
         { type:'bush', count:30, tool:null, minPower:0, base:{item:'herb',min:1,max:2}, bonus:[{item:'mushroom',chance:0.3},{item:'fiber',chance:0.3},{item:'venom_sac',chance:0.03}] },
@@ -343,12 +334,19 @@ window.GAME_DATA = {
         { type:'rock', count:14, tool:null, minPower:0, base:{item:'clay',min:1,max:2}, bonus:[{item:'sulfur',chance:0.15},{item:'salt',chance:0.12}] },
         { type:'coal', count:8, tool:'pick', minPower:0, base:{item:'coal',min:1,max:2}, bonus:[{item:'sulfur',chance:0.12}] }
       ],
-      enemies:[{type:'bog_lurker',count:9},{type:'spider',count:6}], hazard:'poison'
+      enemies:[], hazard:'poison',
+      waves:[
+        [{type:'grunt',count:8},{type:'spitter',count:2}],
+        [{type:'spitter',count:4},{type:'spider',count:5}],
+        [{type:'lurker',count:3},{type:'spitter',count:4},{type:'grunt',count:6}],
+        [{type:'lurker',count:5},{type:'spider',count:6},{type:'spitter',count:3}],
+        [{type:'lurker',count:6},{type:'brute',count:3},{type:'spitter',count:5}]
+      ]
     },
     peaks: {
       name:'Пепельные пики', danger:3, mapX:74, mapY:30, biome:'peaks',
-      ground:[0x6a5a4a,0x8a6a4a], skyDay:0x9f8f7a, skyNight:0x140a07,
-      desc:'Холод и големы. Обсидиан, золото и уголь в избытке.',
+      ground:[0x7a6a5a,0x9a7a5a], skyDay:0xaf9f8a, skyNight:0x140a07,
+      desc:'Холод, големы и призраки. Обсидиан и золото.',
       unlock:{ level:3, visited:'swamp' }, features:[],
       nodes:[
         { type:'ore', count:20, tool:'pick', minPower:3, base:{item:'iron_ore',min:1,max:2}, bonus:[{item:'silver_ore',chance:0.15},{item:'gold_ore',chance:0.05},{item:'sulfur',chance:0.18}] },
@@ -356,12 +354,19 @@ window.GAME_DATA = {
         { type:'coal', count:16, tool:'pick', minPower:0, base:{item:'coal',min:2,max:4}, bonus:[{item:'sulfur',chance:0.2},{item:'ash',chance:0.3}] },
         { type:'crystal', count:10, tool:'pick', minPower:4, base:{item:'frost_shard',min:1,max:1}, bonus:[{item:'gold_ore',chance:0.07},{item:'ember_core',chance:0.02}] }
       ],
-      enemies:[{type:'ash_golem',count:6},{type:'frost_wraith',count:5}], hazard:'cold'
+      enemies:[], hazard:'cold',
+      waves:[
+        [{type:'runner',count:8},{type:'grunt',count:6}],
+        [{type:'wraith',count:3},{type:'wolf',count:5}],
+        [{type:'golem',count:2},{type:'wraith',count:4},{type:'runner',count:6}],
+        [{type:'golem',count:3},{type:'wraith',count:5},{type:'brute',count:3}],
+        [{type:'golem',count:4},{type:'wraith',count:6},{type:'runner',count:10}]
+      ]
     },
     ruins: {
       name:'Древние руины', danger:4, mapX:88, mapY:52, biome:'ruins',
-      ground:[0x4a4a5a,0x5a5a6a], skyDay:0x7a7a9f, skyNight:0x070714,
-      desc:'Высшая опасность. Каменные стражи, платина и чёрные алмазы.',
+      ground:[0x5a5a6a,0x6a6a7a], skyDay:0x8a8aaf, skyNight:0x070714,
+      desc:'Стражи и тени. Платина и чёрные алмазы.',
       unlock:{ level:5, visited:'peaks' }, features:[],
       nodes:[
         { type:'crystal', count:14, tool:'pick', minPower:5, base:{item:'crystal_shard',min:1,max:2}, bonus:[{item:'moon_dust',chance:0.03},{item:'star_fragment',chance:0.015},{item:'gold_ore',chance:0.1}] },
@@ -369,7 +374,14 @@ window.GAME_DATA = {
         { type:'relic', count:5, tool:'pick', minPower:5, base:{item:'rune_stone',min:1,max:1}, bonus:[{item:'ancient_relic',chance:0.05},{item:'void_shard',chance:0.015}] },
         { type:'coal', count:6, tool:'pick', minPower:0, base:{item:'coal',min:1,max:2}, bonus:[{item:'ash',chance:0.3}] }
       ],
-      enemies:[{type:'moon_sentinel',count:7},{type:'void_wisp',count:5}], hazard:'arcane'
+      enemies:[], hazard:'arcane',
+      waves:[
+        [{type:'shade',count:3},{type:'grunt',count:8}],
+        [{type:'sentinel',count:1},{type:'shade',count:4},{type:'spitter',count:4}],
+        [{type:'sentinel',count:2},{type:'shade',count:5},{type:'wraith',count:4}],
+        [{type:'sentinel',count:3},{type:'shade',count:6},{type:'golem',count:2}],
+        [{type:'sentinel',count:4},{type:'shade',count:8},{type:'wraith',count:6}]
+      ]
     }
   },
 
