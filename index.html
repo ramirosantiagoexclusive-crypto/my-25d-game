@@ -64,27 +64,34 @@ h2{font-family:'Unbounded';font-weight:700;font-size:clamp(18px,4vw,24px);margin
 .btn-ghost:hover{border-color:var(--teal)}
 .btn-ghost:disabled{opacity:.4;cursor:not-allowed}
 .btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:8px}
+.filter-row{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:10px 0}
+.filter-btn{background:var(--surface2);border:1px solid var(--line);color:var(--dim);border-radius:9px;padding:6px 12px;cursor:pointer;font-size:12px;font-weight:600;transition:.12s}
+.filter-btn:hover{border-color:var(--teal)}
+.filter-btn.active{border-color:var(--amber);color:var(--amber);background:#24452c}
+.cat-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;border:1px solid;letter-spacing:.3px;white-space:nowrap}
 #equipSlots{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:12px 0}
 .equip-slot{background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:10px 6px;text-align:center;cursor:pointer;min-height:78px}
 .equip-slot .es-label{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px}
 .equip-slot .es-icon{font-size:24px;margin:4px 0}
 .equip-slot .es-name{font-size:10.5px;line-height:1.2}
 #statLine{font-size:12px;color:var(--dim);text-align:center;margin:8px 0;line-height:1.6}
-#invGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin:12px 0}
+#invGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px;margin:12px 0}
 .inv-item{background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:10px 8px;cursor:pointer;text-align:center;transition:.12s;position:relative}
 .inv-item:hover{transform:translateY(-2px)}
 .inv-item .ii-icon{font-size:24px}
 .inv-item .ii-name{font-size:11px;margin-top:4px;line-height:1.2}
 .inv-item .ii-count{position:absolute;top:5px;right:7px;font-size:11px;font-weight:700;color:var(--amber)}
+.inv-item .ii-cat{margin-top:5px}
 #invDetail{background:#0d2114;border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:10px;min-height:90px}
 #invDetail .id-name{font-weight:700;font-size:15px}
 #invDetail .id-desc{font-size:12px;color:var(--dim);margin:6px 0;line-height:1.4}
+#invDetail .id-purpose{font-size:12px;color:var(--teal);margin:6px 0;line-height:1.4}
 #invDetail .id-attrs{font-size:12px;line-height:1.6}
 #craftList,#tradeList{display:flex;flex-direction:column;gap:8px;margin:12px 0;max-height:52vh;overflow:auto;padding-right:4px}
 .recipe,.trade-row{display:flex;align-items:center;gap:12px;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
 .recipe .r-icon,.trade-row .t-icon{font-size:24px;width:34px;text-align:center}
 .recipe .r-main,.trade-row .t-main{flex:1;min-width:0}
-.recipe .r-name,.trade-row .t-name{font-weight:700;font-size:13px}
+.recipe .r-name,.trade-row .t-name{font-weight:700;font-size:13px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .recipe .r-mats,.trade-row .t-sub{font-size:11.5px;color:var(--dim);margin-top:3px;line-height:1.4}
 .recipe button,.trade-row button{flex:none}
 .missing{color:var(--danger)}
@@ -204,6 +211,7 @@ body.touch #hint{display:none}
     <h2>Инвентарь</h2>
     <div id="statLine"></div>
     <div id="equipSlots"></div>
+    <div class="filter-row" id="invFilters"></div>
     <div id="invGrid"></div>
     <div id="invDetail">Выберите предмет, чтобы увидеть его атрибуты.</div>
     <div class="btn-row"><button class="btn-ghost" id="btnInvClose">Закрыть</button></div>
@@ -214,7 +222,8 @@ body.touch #hint{display:none}
   <div class="panel wide">
     <div class="eyebrow">верстак</div>
     <h2>Крафт</h2>
-    <div class="story" style="font-size:12px">Редкие рецепты требуют уровня и материалов из опасных локаций.</div>
+    <div class="story" style="font-size:12px">Каждый предмет подписан: оружие, броня, еда, зелье или материал. Фильтруйте по типу.</div>
+    <div class="filter-row" id="craftFilters"></div>
     <div id="craftList"></div>
     <div class="btn-row"><button class="btn-ghost" id="btnCraftClose">Закрыть</button></div>
   </div>
