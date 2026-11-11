@@ -1,39 +1,270 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2.5D Игра на Three.js</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { overflow: hidden; background: #87CEEB; }
-        #ui {
-            position: fixed;
-            top: 10px;
-            left: 10px;
-            color: white;
-            font-family: Arial, sans-serif;
-            font-size: 16px;
-            text-shadow: 1px 1px 2px black;
-            pointer-events: none;
-            z-index: 100;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0b1d13">
+<title>Поляна светлячков — 2.5D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b1d13; --surface:#12291b; --surface2:#1a3624; --line:#2c5237;
+  --text:#f2ead8; --dim:#a8c4a0;
+  --amber:#ffd166; --teal:#4de3c1; --danger:#ff5a5f; --info:#6fc3ff; --success:#7ee081;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;background:var(--bg);font-family:'Rubik',sans-serif;color:var(--text)}
+canvas{position:fixed;inset:0;display:block;touch-action:none}
+::-webkit-scrollbar{width:10px}
+::-webkit-scrollbar-track{background:var(--surface)}
+::-webkit-scrollbar-thumb{background:var(--line);border-radius:6px}
+::-webkit-scrollbar-thumb:hover{background:var(--teal)}
+*{scrollbar-width:thin;scrollbar-color:var(--line) var(--surface)}
+
+/* ---------- HUD ---------- */
+#hud{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-start;
+  padding:14px 16px;pointer-events:none;z-index:20;animation:slideDown .6s ease both}
+.hud-group{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.chip{display:flex;align-items:center;gap:8px;background:rgba(10,25,16,.78);border:1px solid rgba(120,200,140,.28);
+  border-radius:12px;padding:8px 14px;font-size:15px;font-weight:500;backdrop-filter:blur(6px);
+  box-shadow:0 4px 14px rgba(0,0,0,.3)}
+.chip svg{width:18px;height:18px;flex:none}
+.chip.pulse{animation:chipPulse .35s ease}
+#crystalChip svg{color:var(--teal);filter:drop-shadow(0 0 5px rgba(77,227,193,.8))}
+#timeChip svg{color:var(--amber)}
+#hearts{display:flex;gap:5px;background:rgba(10,25,16,.78);border:1px solid rgba(120,200,140,.28);
+  border-radius:12px;padding:8px 12px;backdrop-filter:blur(6px)}
+.heart{width:20px;height:20px;color:var(--danger);filter:drop-shadow(0 0 5px rgba(255,90,95,.7));transition:.2s}
+.heart.lost{color:#3a4a3e;filter:none;opacity:.55}
+.heart.pop{animation:heartPop .45s ease}
+.icon-btn{pointer-events:auto;width:40px;height:40px;border-radius:12px;border:1px solid rgba(120,200,140,.28);
+  background:rgba(10,25,16,.78);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  backdrop-filter:blur(6px);transition:.15s}
+.icon-btn:hover{background:var(--surface2);border-color:var(--teal);transform:translateY(-2px)}
+.icon-btn:active{transform:scale(.93)}
+.icon-btn svg{width:19px;height:19px}
+.icon-btn:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+
+#hint{position:fixed;left:16px;bottom:14px;z-index:20;background:rgba(10,25,16,.7);border:1px solid rgba(120,200,140,.22);
+  border-radius:12px;padding:8px 14px;font-size:13px;color:var(--dim);backdrop-filter:blur(6px)}
+#hint b{color:var(--text);font-weight:600}
+kbd{background:#0d2114;border:1px solid #35603f;border-bottom-width:2px;border-radius:6px;padding:1px 7px;
+  font-family:'Rubik';font-size:12px;font-weight:600;color:var(--amber)}
+
+#toast{position:fixed;top:78px;left:50%;transform:translateX(-50%) translateY(-8px);z-index:25;
+  background:rgba(18,41,27,.92);border:1px solid var(--amber);color:var(--text);border-radius:12px;
+  padding:10px 20px;font-size:15px;font-weight:500;opacity:0;pointer-events:none;transition:.25s;
+  box-shadow:0 0 24px rgba(255,209,102,.25)}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+#vignette{position:fixed;inset:0;pointer-events:none;z-index:15;opacity:0;transition:opacity .5s ease-out;
+  box-shadow:inset 0 0 140px 50px rgba(255,50,50,.55)}
+#vignette.hit{opacity:1;transition:none}
+
+/* ---------- Оверлеи ---------- */
+.overlay{position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:18px;
+  background:radial-gradient(ellipse at center,rgba(8,18,11,.4),rgba(4,10,7,.78));backdrop-filter:blur(4px);
+  transition:opacity .3s;overflow:auto}
+.overlay.hidden{opacity:0;pointer-events:none}
+.panel{width:min(560px,94vw);max-height:90vh;overflow:auto;background:linear-gradient(160deg,rgba(20,45,29,.95),rgba(9,22,14,.97));
+  border:1px solid var(--line);border-radius:20px;padding:34px 36px;text-align:center;
+  box-shadow:0 24px 70px rgba(0,0,0,.6),inset 0 1px 0 rgba(160,230,180,.12);animation:panelIn .45s cubic-bezier(.2,1.4,.4,1) both}
+.panel>*{animation:rise .5s ease both}
+.panel>*:nth-child(2){animation-delay:.06s}.panel>*:nth-child(3){animation-delay:.12s}
+.panel>*:nth-child(4){animation-delay:.18s}.panel>*:nth-child(5){animation-delay:.24s}
+.panel>*:nth-child(6){animation-delay:.3s}.panel>*:nth-child(7){animation-delay:.36s}
+.eyebrow{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--teal);margin-bottom:10px;font-weight:700}
+h1{font-family:'Unbounded';font-weight:900;font-size:clamp(24px,5vw,36px);line-height:1.15;margin-bottom:14px;
+  background:linear-gradient(100deg,var(--amber) 20%,var(--teal) 80%);-webkit-background-clip:text;background-clip:text;color:transparent}
+h2{font-family:'Unbounded';font-weight:700;font-size:clamp(20px,4vw,28px);margin-bottom:12px}
+.story{color:var(--dim);font-size:15px;line-height:1.55;margin-bottom:22px}
+.story b{color:var(--teal)}
+.btn-primary{font-family:'Unbounded';font-weight:700;font-size:15px;color:#241a05;border:none;cursor:pointer;
+  background:linear-gradient(135deg,#ffd166,#ffb347);border-radius:14px;padding:15px 34px;
+  box-shadow:0 6px 24px rgba(255,190,80,.35);transition:.15s;letter-spacing:.5px}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(255,190,80,.5);filter:brightness(1.06)}
+.btn-primary:active{transform:scale(.96)}
+.btn-ghost{font-family:'Rubik';font-weight:600;font-size:14px;color:var(--text);background:var(--surface2);
+  border:1px solid var(--line);border-radius:12px;padding:12px 24px;cursor:pointer;transition:.15s}
+.btn-ghost:hover{border-color:var(--teal);background:#22452e}
+.btn-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:6px}
+
+#diffGroup{display:flex;gap:8px;justify-content:center;margin-bottom:22px;flex-wrap:wrap}
+.diff-btn{flex:1;min-width:130px;background:var(--surface2);border:1px solid var(--line);border-radius:14px;
+  padding:12px 10px;cursor:pointer;color:var(--dim);transition:.15s;font-family:'Rubik'}
+.diff-btn .d-name{display:block;font-weight:700;font-size:14px;color:var(--text);margin:4px 0 2px}
+.diff-btn .d-desc{font-size:11.5px;line-height:1.3;display:block}
+.diff-btn .d-ico{font-size:20px}
+.diff-btn:hover{border-color:var(--teal)}
+.diff-btn.selected{background:linear-gradient(150deg,#245c39,#1a4a2c);border-color:var(--teal);
+  box-shadow:0 0 18px rgba(77,227,193,.25);color:var(--dim)}
+.diff-btn.selected .d-name{color:var(--teal)}
+
+.legend{display:grid;grid-template-columns:auto 1fr;gap:8px 14px;text-align:left;margin:22px auto 0;
+  max-width:330px;font-size:13.5px;color:var(--dim);align-items:center}
+.best-line{margin-top:18px;font-size:13px;color:var(--dim)}
+.best-line b{color:var(--amber)}
+.stats{display:flex;gap:10px;justify-content:center;margin:18px 0 22px;flex-wrap:wrap}
+.stat{background:var(--surface2);border:1px solid var(--line);border-radius:14px;padding:12px 20px;min-width:110px}
+.stat .s-label{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);margin-bottom:4px}
+.stat .s-value{font-family:'Unbounded';font-weight:700;font-size:20px;color:var(--amber)}
+.stat.teal .s-value{color:var(--teal)}
+#overlayWin h2{color:var(--success)}
+#overlayLose h2{color:var(--danger)}
+
+/* ---------- Сенсорное управление ---------- */
+#touchUI{display:none;position:fixed;inset:0;pointer-events:none;z-index:22}
+body.touch #touchUI{display:block}
+body.touch #hint{display:none}
+#joyBase{position:absolute;left:26px;bottom:30px;width:118px;height:118px;border-radius:50%;pointer-events:auto;
+  background:rgba(10,25,16,.5);border:2px solid rgba(120,200,140,.35);touch-action:none}
+#joyKnob{position:absolute;left:50%;top:50%;width:52px;height:52px;border-radius:50%;transform:translate(-50%,-50%);
+  background:radial-gradient(circle at 35% 30%,#7ff0d4,#2a9d84);box-shadow:0 4px 14px rgba(0,0,0,.4)}
+.tbtn{position:absolute;pointer-events:auto;border-radius:50%;border:none;cursor:pointer;display:flex;
+  align-items:center;justify-content:center;touch-action:none;color:#241a05;transition:transform .1s}
+.tbtn:active,.tbtn.on{transform:scale(.9)}
+#btnJump{right:28px;bottom:34px;width:76px;height:76px;background:linear-gradient(135deg,#ffd166,#ffb347);
+  box-shadow:0 6px 20px rgba(255,190,80,.4)}
+#btnSprint{right:118px;bottom:96px;width:60px;height:60px;background:linear-gradient(135deg,#7ff0d4,#3bbf9f);
+  box-shadow:0 6px 20px rgba(77,227,193,.35)}
+#btnSprint.on{box-shadow:0 0 26px rgba(77,227,193,.8)}
+.tbtn svg{width:30px;height:30px}
+
+/* ---------- Загрузка ---------- */
+#boot{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;flex-direction:column;gap:18px;
+  align-items:center;justify-content:center;transition:opacity .5s}
+#boot.hide{opacity:0;pointer-events:none}
+.spinner{width:44px;height:44px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--teal);
+  animation:spin 1s linear infinite}
+#bootText{color:var(--dim);font-size:14px;max-width:300px;text-align:center;line-height:1.5}
+
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes slideDown{from{transform:translateY(-16px);opacity:0}to{transform:none;opacity:1}}
+@keyframes panelIn{from{transform:scale(.92) translateY(14px);opacity:0}to{transform:none;opacity:1}}
+@keyframes rise{from{transform:translateY(10px);opacity:0}to{transform:none;opacity:1}}
+@keyframes chipPulse{40%{transform:scale(1.12)}}
+@keyframes heartPop{30%{transform:scale(1.5) rotate(-12deg)}60%{transform:scale(.8)}}
+@media (max-width:640px){
+  .chip{font-size:13px;padding:7px 10px}
+  #hud{padding:10px}
+  .panel{padding:26px 20px}
+}
+</style>
 </head>
 <body>
-    <div id="ui">
-        WASD/Стрелки - движение | Shift - спринт
+
+<div id="boot"><div class="spinner"></div><div id="bootText">Загружаем поляну…</div></div>
+
+<div id="hud">
+  <div class="hud-group">
+    <div class="chip" id="crystalChip">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 19 9 12 22 5 9Z"/></svg>
+      <span id="crystalCount">0 / 12</span>
     </div>
-    
-    <script type="importmap">
-    {
-        "imports": {
-            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
-        }
-    }
-    </script>
-    
-    <script type="module" src="js/game.js"></script>
+    <div class="chip" id="timeChip">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg>
+      <span id="timeText">00:00</span>
+    </div>
+  </div>
+  <div class="hud-group">
+    <div id="hearts"></div>
+    <button class="icon-btn" id="btnSound" aria-label="Звук">
+      <svg id="icoSoundOn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4V5z" fill="currentColor" stroke="none"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>
+      <svg id="icoSoundOff" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M11 5 6 9H2v6h4l5 4V5z" fill="currentColor" stroke="none"/><path d="m16 9 6 6M22 9l-6 6"/></svg>
+    </button>
+    <button class="icon-btn" id="btnPause" aria-label="Пауза">
+      <svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
+    </button>
+    <button class="icon-btn" id="btnRestart" aria-label="Заново">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 12a9 9 0 1 1-2.9-6.6"/><path d="M21 3v6h-6"/></svg>
+    </button>
+  </div>
+</div>
+
+<div id="hint"><b>WASD</b> — движение · <kbd>Shift</kbd> — спринт · <kbd>Пробел</kbd> — прыжок · <kbd>Esc</kbd> — пауза</div>
+<div id="toast"></div>
+<div id="vignette"></div>
+
+<div id="touchUI">
+  <div id="joyBase"><div id="joyKnob"></div></div>
+  <button class="tbtn" id="btnSprint" aria-label="Спринт"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h6l-1 8 9-12h-6z"/></svg></button>
+  <button class="tbtn" id="btnJump" aria-label="Прыжок"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+</div>
+
+<!-- МЕНЮ -->
+<div class="overlay" id="overlayMenu">
+  <div class="panel">
+    <div class="eyebrow">мини-игра · three.js · 2.5D</div>
+    <h1>ПОЛЯНА<br>СВЕТЛЯЧКОВ</h1>
+    <p class="story">Сумерки опустились на поляну. Собери <b>12 кристаллов света</b>, пока блуждающие тени не добрались до тебя. Прыгай через тени — они не достают тех, кто в воздухе!</p>
+    <div id="diffGroup">
+      <button class="diff-btn" data-diff="calm"><span class="d-ico">🌿</span><span class="d-name">Спокойно</span><span class="d-desc">только кристаллы, без теней</span></button>
+      <button class="diff-btn selected" data-diff="normal"><span class="d-ico">🌾</span><span class="d-name">Обычно</span><span class="d-desc">2 тени бродят рядом</span></button>
+      <button class="diff-btn" data-diff="hard"><span class="d-ico">🌑</span><span class="d-name">Хардкор</span><span class="d-desc">4 быстрых тени</span></button>
+    </div>
+    <button class="btn-primary" id="btnStart">НАЧАТЬ ИГРУ</button>
+    <div class="legend">
+      <span><kbd>W A S D</kbd></span><span>движение</span>
+      <span><kbd>Shift</kbd></span><span>спринт</span>
+      <span><kbd>Пробел</kbd></span><span>прыжок (через тени!)</span>
+      <span><kbd>M</kbd></span><span>звук вкл/выкл</span>
+    </div>
+    <div class="best-line" id="bestLine"></div>
+  </div>
+</div>
+
+<!-- ПАУЗА -->
+<div class="overlay hidden" id="overlayPause">
+  <div class="panel">
+    <div class="eyebrow">игра остановлена</div>
+    <h2>Пауза</h2>
+    <p class="story">Светлячки терпеливо ждут…</p>
+    <div class="btn-row">
+      <button class="btn-primary" id="btnResume">ПРОДОЛЖИТЬ</button>
+      <button class="btn-ghost" id="btnPauseRestart">Заново</button>
+    </div>
+  </div>
+</div>
+
+<!-- ПОБЕДА -->
+<div class="overlay hidden" id="overlayWin">
+  <div class="panel">
+    <div class="eyebrow">все кристаллы собраны</div>
+    <h2>✨ Поляна сияет!</h2>
+    <div class="stats">
+      <div class="stat"><div class="s-label">Время</div><div class="s-value" id="winTime">00:00</div></div>
+      <div class="stat teal"><div class="s-label">Очки</div><div class="s-value" id="winScore">0</div></div>
+      <div class="stat"><div class="s-label">Рекорд</div><div class="s-value" id="winBest">—</div></div>
+    </div>
+    <button class="btn-primary" id="btnWinRestart">ИГРАТЬ СНОВА</button>
+  </div>
+</div>
+
+<!-- ПОРАЖЕНИЕ -->
+<div class="overlay hidden" id="overlayLose">
+  <div class="panel">
+    <div class="eyebrow">тьма оказалась сильнее</div>
+    <h2>Тени поглотили поляну…</h2>
+    <p class="story" id="loseText"></p>
+    <button class="btn-primary" id="btnLoseRestart">ПОПРОБОВАТЬ СНОВА</button>
+  </div>
+</div>
+
+<script>
+  window.__fmReady=false;
+  setTimeout(()=>{ if(!window.__fmReady){
+    document.getElementById('bootText').textContent='Не удалось загрузить Three.js. Проверьте интернет и обновите страницу (Ctrl+Shift+R).';
+  }},9000);
+  if('ontouchstart' in window) document.body.classList.add('touch');
+</script>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+<script type="module" src="js/game.js"></script>
 </body>
 </html>
