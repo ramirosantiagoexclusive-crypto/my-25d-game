@@ -1570,4 +1570,470 @@ renderer.domElement.addEventListener('wheel', (e) => {
 function updateSky(dt) {
   const elev = Math.sin((dayTime - 0.25) * TAU);
   const day = clamp(elev * 1.5 + 0.12, 0, 1);
-  const dusk = clamp(1 - Math.abs(elev) * 3, 
+  const dusk = clamp(1 - Math.abs(elev) * 3, 0, 1);
+
+  sun.intensity = 0.18 + day * 1.5;
+  sun.color.set(0x7f9fd9).lerp(new THREE.Color(0xffd9a0), day);
+  hemi.intensity = 0.22 + day * 0.4;
+  hero.userData.lantern.intensity = (1 - day) * 1.5;
+
+  skyRepaint -= dt;
+  if (skyRepaint > 0) return day;
+  skyRepaint = 0.25;
+
+  const top = new THREE.Color(0x050a18).lerp(new THREE.Color(0x6db3d9), day);
+  const mid = new THREE.Color(0x0d1b33).lerp(new THREE.Color(0x9fd3c0), day);
+  const hor = new THREE.Color(0x16263f).lerp(new THREE.Color(0xe9d9a0), day).lerp(new THREE.Color(0xff9f43), dusk * 0.5);
+
+  const g = skyCtx.createLinearGradient(0, 0, 0, 512);
+  g.addColorStop(0, '#' + top.getHexString());
+  g.addColorStop(0.45, '#' + mid.getHexString());
+  g.addColorStop(0.75, '#' + hor.getHexString());
+  g.addColorStop(1, '#' + hor.clone().multiplyScalar(0.8).getHexString());
+  skyCtx.fillStyle = g;
+  skyCtx.fillRect(0, 0, 512, 512);
+
+  skyCtx.fillStyle = '#fff';
+  stars.forEach((s) => {
+    skyCtx.globalAlpha = s.a * (1 - day);
+    skyCtx.fillRect(s.x, s.y, 1.6, 1.6);
+  });
+  skyCtx.globalAlpha = 1;
+
+  if (elev > -0.1) {
+    const sx = dayTime * 512;
+    const sy = 330 - elev * 230;
+    const sg = skyCtx.createRadialGradient(sx, sy, 4, sx, sy, 110);
+    sg.addColorStop(0, 'rgba(255,240,190,0.95)');
+    sg.addColorStop(1, 'rgba(255,240,190,0)');
+    skyCtx.fillStyle = sg;
+    skyCtx.fillRect(0, 0, 512, 512);
+  }
+  if (day < 0.4) {
+    const mx = (1 - dayTime) * 512;
+    const my = 300 + elev * 180;
+    const mg = skyCtx.createRadialGradient(mx, my, 3, mx, my, 70);
+    mg.addColorStop(0, 'rgba(200,220,255,0.8)');
+    mg.addColorStop(1, 'rgba(200,220,255,0)');
+    skyCtx.fillStyle = mg;
+    skyCtx.fillRect(0, 0, 512, 512);
+  }
+
+  scene.fog.color.copy(mid).lerp(hor, 0.4);
+  skyTex.needsUpdate = true;
+  return day;
+}
+
+/* ==================== ИГРОК ==================== */
+const camFwd = new THREE.Vector3();
+const camRight = new THREE.Vector3();
+const UP = new THREE.Vector3(0, 1, 0);
+
+function updatePlayer(dt, t) {
+  let ix = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0) + joy.x;
+  let iz = (keys.KeyS || keys.ArrowDown ? 1 : 0) - (keys.KeyW || keys.ArrowUp ? 1 : 0) + joy.y;
+  const il = Math.hypot(ix, iz);
+  if (il > 1) { ix /= il; iz /= il; }
+
+  const wantSprint = (keys.ShiftLeft || keys.ShiftRight || sprintTouch) && il > 0 && player.stamina > 2;
+  player.sprinting = wantSprint;
+  if (wantSprint) player.stamina = clamp(player.stamina - 18 * dt, 0, 100);
+  else player.stamina = clamp(player.stamina + (nearLitFire() ? 22 : 9) * dt, 0, 100);
+
+  const water = world && Math.hypot(player.x - world.lake.x, player.z - world.lake.z) < world.lake.r;
+  player.inWater = water;
+  const spd = (wantSprint ? SPRINT : WALK) * (water ? 0.45 : 1);
+
+  camera.getWorldDirection(camFwd);
+  camFwd.y = 0;
+  camFwd.normalize();
+  camRight.crossVectors(camFwd, UP).normalize();
+  const wx = camRight.x * ix + camFwd.x * -iz;
+  const wz = camRight.z * ix + camFwd.z * -iz;
+
+  const k = 1 - Math.exp(-12 * dt);
+  player.vx += (wx * spd - player.vx) * k;
+  player.vz += (wz * spd - player.vz) * k;
+
+  const ox = player.x;
+  const oz = player.z;
+  player.x += player.vx * dt;
+  player.z += player.vz * dt;
+  distanceWalked += Math.hypot(player.x - ox, player.z - oz);
+  player.moving = Math.hypot(player.vx, player.vz) > 0.5;
+
+  for (const c of world.colliders) {
+    const dx = player.x - c.x;
+    const dz = player.z - c.z;
+    const d = Math.hypot(dx, dz);
+    const min = c.r + 0.45;
+    if (d < min && d > 0.001) {
+      player.x = c.x + dx / d * min;
+      player.z = c.z + dz / d * min;
+    }
+  }
+  const dc = Math.hypot(player.x, player.z);
+  if (dc > WORLD_R) {
+    player.x *= WORLD_R / dc;
+    player.z *= WORLD_R / dc;
+  }
+
+  if (jumpQueued && player.grounded && !player.inWater) {
+    player.vy = JUMP_V;
+    player.grounded = false;
+    Sfx.jump();
+    burst(player.x, 0.15, player.z, 0xc9b98a, 8, 2, 4, 0.5);
+  }
+  jumpQueued = false;
+
+  if (!player.grounded) {
+    player.vy -= GRAV * dt;
+    player.y += player.vy * dt;
+    if (player.y <= 0) {
+      player.y = 0;
+      player.grounded = true;
+      if (player.vy < -4) {
+        Sfx.land();
+        player.landT = 0.18;
+        burst(player.x, 0.12, player.z, player.inWater ? 0x6fc3ff : 0xc9b98a, 12, 2.6, 5, 0.55);
+      }
+      player.vy = 0;
+    }
+  }
+
+  if (player.moving) {
+    const target = Math.atan2(player.vx, player.vz);
+    let d = target - player.facing;
+    d = Math.atan2(Math.sin(d), Math.cos(d));
+    player.facing += d * Math.min(1, dt * 12);
+  }
+
+  const P = hero.userData;
+  const runF = player.sprinting ? 1.5 : 1;
+  if (player.moving && player.grounded) player.walkPhase += dt * 9 * runF;
+  const s = Math.sin(player.walkPhase);
+  if (player.grounded) {
+    const amp = player.moving ? (player.sprinting ? 0.85 : 0.55) : 0;
+    P.legL.rotation.x = s * amp;
+    P.legR.rotation.x = -s * amp;
+    P.armL.rotation.x = -s * amp * 0.8;
+    P.armR.rotation.x = s * amp * 0.8;
+    if (player.moving && player.prevSin > 0 && s <= 0) Sfx.step();
+    player.prevSin = s;
+  } else {
+    P.legL.rotation.x = 0.55;
+    P.legR.rotation.x = -0.35;
+    P.armL.rotation.x = -2.5;
+    P.armR.rotation.x = -2.5;
+  }
+  P.body.scale.y = 1 + Math.sin(t * 2.2) * 0.015;
+  P.tailPivot.rotation.x = -0.25 - (player.moving ? (player.sprinting ? 0.75 : 0.4) : 0) + Math.sin(t * 6) * 0.12;
+  P.tailPivot.rotation.z = Math.sin(t * 3.1) * 0.1;
+  hero.rotation.x = player.moving && player.sprinting && player.grounded ? 0.12 : 0;
+
+  if (player.landT > 0) {
+    player.landT -= dt;
+    const q = Math.max(player.landT, 0) / 0.18;
+    hero.scale.set(1 + q * 0.12, 1 - q * 0.15, 1 + q * 0.12);
+  } else {
+    hero.scale.set(1, 1, 1);
+  }
+
+  const bob = player.moving && player.grounded ? Math.abs(s) * 0.07 : 0;
+  hero.position.set(player.x, player.y + bob, player.z);
+  hero.rotation.y = player.facing;
+
+  if (player.inWater && player.moving) {
+    rippleTimer -= dt;
+    if (rippleTimer <= 0) {
+      rippleTimer = 0.25;
+      spawnRipple(player.x, player.z);
+    }
+  }
+}
+
+function idleHero(t) {
+  const P = hero.userData;
+  P.body.scale.y = 1 + Math.sin(t * 2.2) * 0.02;
+  P.tailPivot.rotation.x = -0.25 + Math.sin(t * 4) * 0.12;
+  P.armL.rotation.x = Math.sin(t * 2.2) * 0.05;
+  P.armR.rotation.x = -Math.sin(t * 2.2) * 0.05;
+}
+
+/* ==================== ВОЛНЫ ==================== */
+function spawnRipple(x, z) {
+  if (!world) return;
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(0.1, 0.16, 20),
+    new THREE.MeshBasicMaterial({ color: 0x9fdcff, transparent: true, opacity: 0.6, side: THREE.DoubleSide })
+  );
+  ring.rotation.x = -Math.PI / 2;
+  ring.position.set(x, 0.06, z);
+  world.group.add(ring);
+  world.ripples.push({ mesh: ring, t: 0 });
+}
+
+function updateRipples(dt) {
+  if (!world) return;
+  for (let i = world.ripples.length - 1; i >= 0; i--) {
+    const r = world.ripples[i];
+    r.t += dt;
+    r.mesh.scale.setScalar(1 + r.t * 3);
+    r.mesh.material.opacity = 0.6 * (1 - r.t / 1.2);
+    if (r.t > 1.2) {
+      world.group.remove(r.mesh);
+      r.mesh.geometry.dispose();
+      r.mesh.material.dispose();
+      world.ripples.splice(i, 1);
+    }
+  }
+}
+
+/* ==================== ВЗАИМОДЕЙСТВИЯ ==================== */
+function updateInteractions(dt) {
+  nearestInteract = null;
+  let best = Infinity;
+  for (const o of world.interactables) {
+    const d = Math.hypot(o.x - player.x, o.z - player.z);
+    if (d < o.r && d < best) { best = d; nearestInteract = o; }
+  }
+
+  if (nearestInteract) {
+    const label = typeof nearestInteract.label === 'function' ? nearestInteract.label() : nearestInteract.label;
+    ui.promptText.textContent = label;
+    ui.prompt.classList.add('show');
+    ui.btnInteract.classList.add('show');
+  } else {
+    ui.prompt.classList.remove('show');
+    ui.btnInteract.classList.remove('show');
+  }
+
+  if (interactQueued) {
+    interactQueued = false;
+    if (nearestInteract) {
+      Sfx.interact();
+      nearestInteract.action();
+    }
+  }
+
+  for (const lm of world.landmarks) {
+    if (!lm.discovered && Math.hypot(lm.x - player.x, lm.z - player.z) < lm.r) {
+      lm.discovered = true;
+      unlock(lm.id);
+    }
+  }
+
+  for (const m of world.mushrooms) {
+    if (m.picked) {
+      m.regrow -= dt;
+      if (m.regrow <= 0) { m.picked = false; m.group.visible = true; }
+    }
+  }
+  for (const tree of world.appleTrees) {
+    if (tree.cd > 0) tree.cd -= dt;
+  }
+
+  if (fishing && Math.hypot(player.x - fishing.x, player.z - fishing.z) > 3) {
+    fishing = null;
+    toast('Вы отошли от поплавка.');
+  }
+  updateFishing(dt);
+}
+
+/* ==================== ЖИЗНЬ МИРА ==================== */
+function updateWorldLife(dt, t, day) {
+  for (const tr of world.trees) {
+    tr.fol.rotation.z = Math.sin(t * 0.8 + tr.phase) * 0.025;
+    tr.fol.rotation.x = Math.cos(t * 0.6 + tr.phase) * 0.02;
+  }
+
+  const ff = world.fireflies;
+  for (let i = 0; i < ff.n; i++) {
+    const f = ff.seed[i];
+    ff.pos[i * 3] = f.x + Math.sin(t * 0.5 + f.s1) * 1.6;
+    ff.pos[i * 3 + 1] = f.y + Math.sin(t * 0.8 + f.s2) * 0.5;
+    ff.pos[i * 3 + 2] = f.z + Math.cos(t * 0.4 + f.s3) * 1.6;
+  }
+  ff.points.geometry.attributes.position.needsUpdate = true;
+  ff.points.material.opacity = (1 - day) * 0.9;
+
+  if (world.fire.lit) {
+    world.fire.flame.scale.set(
+      1 + Math.sin(t * 9) * 0.15,
+      1 + Math.sin(t * 11) * 0.2,
+      1 + Math.sin(t * 7) * 0.15
+    );
+    world.fire.light.intensity = 2 + Math.sin(t * 10) * 0.5;
+    if (Math.random() < dt * 4) burst(world.fire.x, 0.8, world.fire.z, 0xff9f43, 1, 1.5, -1, 0.8);
+  } else {
+    world.fire.light.intensity = 0;
+  }
+
+  if (world.beacon.lit) world.beacon.beamG.rotation.y += dt * 0.7;
+
+  if (world.cat) {
+    world.cat.petT = Math.max(0, world.cat.petT - dt);
+    world.cat.tail.rotation.y = Math.sin(t * (world.cat.petT > 0 ? 14 : 3)) * 0.5;
+  }
+
+  if (world.auroraT > 0) {
+    world.auroraT -= dt;
+    if (Math.random() < dt * 8) {
+      const r = world.runes[Math.floor(Math.random() * world.runes.length)];
+      burst(r.x, 2.5, r.z, Math.random() < 0.5 ? 0xb48cff : 0x4de3c1, 3, 2, -1, 1.5);
+    }
+  }
+
+  for (const a of world.animals) {
+    const dp = Math.hypot(a.x - player.x, a.z - player.z);
+    const fleeR = a.type === 'rabbit' ? 5 : 7;
+    const flee = dp < fleeR && (a.type === 'rabbit' || player.sprinting);
+    if (flee) {
+      const dx = a.x - player.x;
+      const dz = a.z - player.z;
+      const d = Math.hypot(dx, dz) || 1;
+      a.tx = a.x + dx / d * 8;
+      a.tz = a.z + dz / d * 8;
+    } else if (Math.hypot(a.tx - a.x, a.tz - a.z) < 1) {
+      const ang = Math.random() * TAU;
+      const r = 3 + Math.random() * 8;
+      a.tx = a.x + Math.cos(ang) * r;
+      a.tz = a.z + Math.sin(ang) * r;
+    }
+    const dx = a.tx - a.x;
+    const dz = a.tz - a.z;
+    const d = Math.hypot(dx, dz) || 1;
+    const sp = flee ? a.speed * 2.4 : a.speed;
+    a.x += dx / d * sp * dt;
+    a.z += dz / d * sp * dt;
+    const dc = Math.hypot(a.x, a.z);
+    if (dc > WORLD_R - 2) {
+      a.x *= (WORLD_R - 2) / dc;
+      a.z *= (WORLD_R - 2) / dc;
+      a.tx = 0; a.tz = 0;
+    }
+    a.group.position.set(a.x, a.type === 'rabbit' ? Math.abs(Math.sin(t * 6 + a.phase)) * 0.22 : 0, a.z);
+    a.group.rotation.y = Math.atan2(dx, dz);
+  }
+
+  for (const b of world.butterflies) {
+    b.group.position.x = b.cx + Math.sin(t * 0.7 + b.phase) * 2;
+    b.group.position.z = b.cz + Math.cos(t * 0.5 + b.phase) * 2;
+    b.group.position.y = 1 + Math.sin(t * 2 + b.phase) * 0.4;
+    b.w1.rotation.y = Math.sin(t * 14 + b.phase) * 0.8;
+    b.w2.rotation.y = -Math.sin(t * 14 + b.phase) * 0.8;
+    b.group.visible = day > 0.3;
+  }
+
+  for (const b of world.birds) {
+    const a = t * b.speed + b.phase;
+    b.group.position.set(Math.cos(a) * b.r, b.h + Math.sin(t + b.phase) * 0.5, Math.sin(a) * b.r);
+    b.group.rotation.y = -a;
+    b.w1.rotation.z = Math.sin(t * 8 + b.phase) * 0.5;
+    b.w2.rotation.z = -Math.sin(t * 8 + b.phase) * 0.5;
+    b.group.visible = day > 0.25;
+  }
+
+  fishTimer -= dt;
+  if (fishTimer <= 0) {
+    fishTimer = 6 + Math.random() * 8;
+    const a = Math.random() * TAU;
+    const r = Math.random() * world.lake.r * 0.7;
+    const x = world.lake.x + Math.cos(a) * r;
+    const z = world.lake.z + Math.sin(a) * r;
+    spawnRipple(x, z);
+    burst(x, 0.2, z, 0x6fc3ff, 10, 2, 4, 0.7);
+    if (Math.hypot(x - player.x, z - player.z) < 14) Sfx.splash();
+  }
+
+  MAT.mushCap.emissiveIntensity = 0.3 + (1 - day) * 0.9;
+  updateRipples(dt);
+}
+
+/* ==================== КАМЕРА ==================== */
+const camTarget = new THREE.Vector3();
+function updateCamera(dt) {
+  camYaw += (camYawT - camYaw) * Math.min(1, dt * 8);
+  const dist = 22;
+  camTarget.set(
+    player.x + Math.sin(camYaw) * dist,
+    18,
+    player.z + Math.cos(camYaw) * dist
+  );
+  camera.position.lerp(camTarget, 1 - Math.exp(-6 * dt));
+  camera.lookAt(player.x, player.y + 1, player.z);
+
+  const aspect = window.innerWidth / window.innerHeight;
+  camera.left = -frustum * aspect / 2;
+  camera.right = frustum * aspect / 2;
+  camera.top = frustum / 2;
+  camera.bottom = -frustum / 2;
+  camera.updateProjectionMatrix();
+
+  sun.position.set(player.x + 12, 18, player.z + 8);
+  sun.target.position.set(player.x, 0, player.z);
+}
+
+/* ==================== ГЛАВНЫЙ ЦИКЛ ==================== */
+const clock = new THREE.Clock();
+let firstFrame = true;
+let mmTimer = 0;
+
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = Math.min(clock.getDelta(), 0.05);
+  const t = clock.elapsedTime;
+
+  if (state === 'playing' && !activePanel) {
+    gameTime += dt;
+    dayTime = (dayTime + dt * timeSpeed / DAY_LENGTH) % 1;
+  }
+
+  const day = updateSky(dt);
+
+  if (state === 'playing' && !activePanel) {
+    updatePlayer(dt, t);
+    updateInteractions(dt);
+    revealFog();
+    ui.stamina.style.width = player.stamina + '%';
+    const h = Math.floor(dayTime * 24);
+    const m = Math.floor((dayTime * 24 - h) * 60);
+    ui.clock.textContent = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+  } else if (state === 'intro') {
+    camYawT += dt * 0.05;
+    idleHero(t);
+  }
+
+  if (world) updateWorldLife(dt, t, day);
+  updateParticles(dt);
+  updateCamera(dt);
+
+  mmTimer -= dt;
+  if (mmTimer <= 0) {
+    mmTimer = 0.12;
+    drawMinimap();
+  }
+
+  renderer.render(scene, camera);
+
+  if (firstFrame) {
+    firstFrame = false;
+    window.__fmReady = true;
+    ui.boot.classList.add('hide');
+    setTimeout(() => ui.boot.remove(), 600);
+  }
+}
+
+window.addEventListener('resize', () => {
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+/* ==================== ЗАПУСК ==================== */
+applySkin(currentSkin, true);
+newWorld(seed);
+syncDisc();
+renderJournal();
+renderBag();
+renderSkins();
+openPanel('intro');
+animate();
