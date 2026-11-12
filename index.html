@@ -1,298 +1,136 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#0b1d13">
-<title>Долина Светлячков — RPG</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%230b1d13'/><circle cx='16' cy='16' r='6' fill='%23ffd166'/></svg>">
-<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
+<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Вороний Камень — хроника лорда</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%232a2118'/><path d='M16 5l9 5v8c0 6-4 9-9 11-5-2-9-5-9-11v-8z' fill='%23c9a227'/></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Alegreya:wght@500;700;900&family=PT+Sans:wght@400;700&display=swap" rel="stylesheet">
 <style>
-:root{
-  --bg:#0b1d13;--surface:#12291b;--surface2:#1a3624;--line:#2c5237;--text:#f2ead8;--dim:#a8c4a0;
-  --amber:#ffd166;--teal:#4de3c1;--danger:#ff5a5f;--info:#6fc3ff;--success:#7ee081;--violet:#b48cff;
-}
+:root{--ink:#241c14;--ink2:#3a2e21;--parch:#e9dcbe;--parch2:#dccfae;--wood:#7a5230;--forest:#33502f;--iron:#6d7480;--blood:#a8382a;--gold:#c9a227;--moss:#6f9450;--sky:#7fa8c9;--dim:#8a7a5e}
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{height:100%;overflow:hidden;background:var(--bg);font-family:'Rubik',sans-serif;color:var(--text)}
-canvas{display:block}
-#gameCanvas3D{position:fixed;inset:0;touch-action:none}
-::-webkit-scrollbar{width:10px}
-::-webkit-scrollbar-track{background:var(--surface)}
-::-webkit-scrollbar-thumb{background:var(--line);border-radius:6px}
-::-webkit-scrollbar-thumb:hover{background:var(--teal)}
-*{scrollbar-width:thin;scrollbar-color:var(--line) var(--surface)}
-button,select{font-family:'Rubik',sans-serif}
-#hud{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-start;padding:12px 14px;pointer-events:none;z-index:20}
-.hud-group{display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap}
-.chip{display:flex;align-items:center;gap:8px;background:rgba(10,25,16,.82);border:1px solid rgba(120,200,140,.28);border-radius:12px;padding:7px 12px;font-size:13px;font-weight:500;backdrop-filter:blur(6px)}
-.bars{display:flex;flex-direction:column;gap:5px;min-width:170px}
-.bar-row{display:flex;align-items:center;gap:7px;font-size:11px}
-.bar{flex:1;height:8px;border-radius:5px;background:#0d2114;border:1px solid #2c5237;overflow:hidden}
-.bar>i{display:block;height:100%;width:100%;transition:width .15s}
-#hpFill{background:linear-gradient(90deg,#ff5a5f,#ff9f43)}
-#stFill{background:linear-gradient(90deg,#ffd166,#7ee081)}
-#xpFill{background:linear-gradient(90deg,#6fc3ff,#b48cff)}
-.icon-btn{pointer-events:auto;width:38px;height:38px;border-radius:11px;border:1px solid rgba(120,200,140,.28);background:rgba(10,25,16,.82);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;transition:.15s}
-.icon-btn:hover{background:var(--surface2);border-color:var(--teal);transform:translateY(-2px)}
-#quest{position:fixed;top:96px;left:14px;z-index:19;max-width:330px;background:rgba(10,25,16,.82);border:1px solid rgba(255,209,102,.4);border-radius:14px;padding:12px 14px;backdrop-filter:blur(6px)}
-#quest .q-eyebrow{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--amber);font-weight:700;margin-bottom:5px}
-#questText{font-size:13px;line-height:1.45}
-#questProgress{font-size:11px;color:var(--dim);margin-top:6px}
-#prompt{position:fixed;left:50%;bottom:86px;transform:translateX(-50%) translateY(8px);z-index:25;background:rgba(18,41,27,.94);border:1px solid var(--teal);border-radius:14px;padding:11px 20px;font-size:14px;opacity:0;pointer-events:none;transition:.2s;display:flex;gap:10px;align-items:center}
-#prompt.show{opacity:1;transform:translateX(-50%) translateY(0)}
-kbd{background:#0d2114;border:1px solid #35603f;border-bottom-width:2px;border-radius:6px;padding:1px 7px;font-size:11.5px;font-weight:600;color:var(--amber)}
-#toast{position:fixed;top:74px;left:50%;transform:translateX(-50%) translateY(-8px);z-index:26;background:rgba(18,41,27,.94);border:1px solid var(--amber);border-radius:12px;padding:10px 20px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;max-width:82vw;text-align:center}
-#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-#hint{position:fixed;left:14px;bottom:12px;z-index:20;background:rgba(10,25,16,.72);border:1px solid rgba(120,200,140,.22);border-radius:12px;padding:7px 12px;font-size:12px;color:var(--dim)}
-#lootFeed{position:fixed;right:14px;bottom:14px;z-index:24;display:flex;flex-direction:column;gap:6px;align-items:flex-end;pointer-events:none}
-.loot-line{background:rgba(10,25,16,.9);border:1px solid var(--line);border-radius:10px;padding:6px 12px;font-size:12.5px;font-weight:600;animation:lootIn .25s ease,lootOut .4s ease 2.6s forwards;box-shadow:0 4px 14px rgba(0,0,0,.4)}
-@keyframes lootIn{from{transform:translateX(20px);opacity:0}to{transform:none;opacity:1}}
-@keyframes lootOut{to{transform:translateX(20px);opacity:0}}
-.overlay{position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:16px;background:radial-gradient(ellipse at center,rgba(8,18,11,.4),rgba(4,10,7,.82));backdrop-filter:blur(4px);transition:opacity .25s;overflow:auto}
-.overlay.hidden{opacity:0;pointer-events:none}
-.panel{width:min(640px,94vw);max-height:90vh;overflow:auto;background:linear-gradient(160deg,rgba(20,45,29,.97),rgba(9,22,14,.98));border:1px solid var(--line);border-radius:20px;padding:26px 28px;box-shadow:0 24px 70px rgba(0,0,0,.6)}
-.panel.wide{width:min(900px,94vw)}
-.panel.map{width:min(1040px,96vw)}
-.eyebrow{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--teal);margin-bottom:8px;font-weight:700;text-align:center}
-h1{font-family:'Unbounded';font-weight:900;font-size:clamp(22px,5vw,34px);line-height:1.15;margin-bottom:12px;text-align:center;background:linear-gradient(100deg,var(--amber),var(--teal));-webkit-background-clip:text;background-clip:text;color:transparent}
-h2{font-family:'Unbounded';font-weight:700;font-size:clamp(18px,4vw,24px);margin-bottom:12px;text-align:center}
-.story{color:var(--dim);font-size:14px;line-height:1.55;margin-bottom:18px;text-align:center}
-.btn-primary{font-family:'Unbounded';font-weight:700;font-size:13px;color:#241a05;border:none;cursor:pointer;background:linear-gradient(135deg,#ffd166,#ffb347);border-radius:13px;padding:13px 26px;transition:.15s}
-.btn-primary:hover{transform:translateY(-2px);filter:brightness(1.06)}
-.btn-primary:disabled{opacity:.4;cursor:not-allowed;transform:none}
-.btn-ghost{font-weight:600;font-size:13px;color:var(--text);background:var(--surface2);border:1px solid var(--line);border-radius:11px;padding:10px 18px;cursor:pointer;transition:.15s}
-.btn-ghost:hover{border-color:var(--teal)}
-.btn-ghost:disabled{opacity:.4;cursor:not-allowed}
-.btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:8px}
-.quality-row{display:flex;gap:10px;align-items:center;justify-content:center;margin:14px 0;font-size:13px;color:var(--dim)}
-.quality-row select{background:var(--surface2);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:8px 14px;font-size:13px;cursor:pointer}
-.quality-row select:focus{outline:2px solid var(--teal)}
-#fpsText{color:var(--teal);font-weight:700}
-.filter-row{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:10px 0}
-.filter-btn{background:var(--surface2);border:1px solid var(--line);color:var(--dim);border-radius:9px;padding:6px 12px;cursor:pointer;font-size:12px;font-weight:600;transition:.12s}
-.filter-btn:hover{border-color:var(--teal)}
-.filter-btn.active{border-color:var(--amber);color:var(--amber);background:#24452c}
-.cat-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;border:1px solid;letter-spacing:.3px;white-space:nowrap}
-#equipSlots{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:12px 0}
-.equip-slot{background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:10px 6px;text-align:center;cursor:pointer;min-height:78px}
-.equip-slot .es-label{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px}
-.equip-slot .es-icon{font-size:24px;margin:4px 0}
-.equip-slot .es-name{font-size:10.5px;line-height:1.2}
-#statLine{font-size:12px;color:var(--dim);text-align:center;margin:8px 0;line-height:1.6}
-#invGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px;margin:12px 0}
-.inv-item{background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:10px 8px;cursor:pointer;text-align:center;transition:.12s;position:relative}
-.inv-item:hover{transform:translateY(-2px)}
-.inv-item .ii-icon{font-size:24px}
-.inv-item .ii-name{font-size:11px;margin-top:4px;line-height:1.2}
-.inv-item .ii-count{position:absolute;top:5px;right:7px;font-size:11px;font-weight:700;color:var(--amber)}
-.inv-item .ii-cat{margin-top:5px}
-#invDetail{background:#0d2114;border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:10px;min-height:90px}
-#invDetail .id-name{font-weight:700;font-size:15px}
-#invDetail .id-desc{font-size:12px;color:var(--dim);margin:6px 0;line-height:1.4}
-#invDetail .id-purpose{font-size:12px;color:var(--teal);margin:6px 0;line-height:1.4}
-#invDetail .id-attrs{font-size:12px;line-height:1.6}
-#craftList,#tradeList{display:flex;flex-direction:column;gap:8px;margin:12px 0;max-height:52vh;overflow:auto;padding-right:4px}
-.recipe,.trade-row{display:flex;align-items:center;gap:12px;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
-.recipe .r-icon,.trade-row .t-icon{font-size:24px;width:34px;text-align:center}
-.recipe .r-main,.trade-row .t-main{flex:1;min-width:0}
-.recipe .r-name,.trade-row .t-name{font-weight:700;font-size:13px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.recipe .r-mats,.trade-row .t-sub{font-size:11.5px;color:var(--dim);margin-top:3px;line-height:1.4}
-.recipe button,.trade-row button{flex:none}
-.missing{color:var(--danger)}
-.ok{color:var(--success)}
-#tradeTabs{display:flex;gap:8px;justify-content:center;margin:10px 0}
-.trade-tab{background:var(--surface2);border:1px solid var(--line);color:var(--dim);border-radius:10px;padding:8px 18px;cursor:pointer;font-weight:600}
-.trade-tab.active{border-color:var(--amber);color:var(--amber)}
-#mapArea{position:relative;height:420px;border-radius:16px;border:1px solid var(--line);overflow:hidden;margin:12px 0;background:radial-gradient(circle at 20% 70%,rgba(77,227,193,.18),transparent 30%),radial-gradient(circle at 75% 25%,rgba(255,159,67,.16),transparent 28%),linear-gradient(140deg,#13291d,#0a1811)}
-#mapArea svg{position:absolute;inset:0;width:100%;height:100%}
-.map-node{position:absolute;transform:translate(-50%,-50%);width:120px;text-align:center;cursor:pointer;transition:.15s}
-.map-node:hover{transform:translate(-50%,-50%) scale(1.05)}
-.map-node .mn-dot{width:44px;height:44px;border-radius:50%;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:20px;border:2px solid var(--line);background:var(--surface2);box-shadow:0 4px 14px rgba(0,0,0,.4)}
-.map-node.current .mn-dot{border-color:var(--amber);box-shadow:0 0 20px rgba(255,209,102,.5)}
-.map-node.locked .mn-dot{opacity:.45;filter:grayscale(1)}
-.map-node.selected .mn-dot{border-color:var(--teal);box-shadow:0 0 18px rgba(77,227,193,.5)}
-.map-node .mn-name{font-size:11px;font-weight:700;line-height:1.2}
-.map-node .mn-danger{font-size:10px;color:var(--dim)}
-#mapDetail{background:#0d2114;border:1px solid var(--line);border-radius:14px;padding:14px;font-size:13px;line-height:1.5}
-#mapDetail b{color:var(--amber)}
-#transition{position:fixed;inset:0;z-index:40;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;opacity:0;pointer-events:none;transition:opacity .4s}
-#transition.show{opacity:1;pointer-events:auto}
-#transition .t-title{font-family:'Unbounded';font-weight:700;font-size:22px;color:var(--amber)}
-#boot{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;flex-direction:column;gap:16px;align-items:center;justify-content:center}
-#boot.hide{opacity:0;pointer-events:none;transition:opacity .5s}
-.spinner{width:42px;height:42px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--teal);animation:spin 1s linear infinite}
-#bootText{color:var(--dim);font-size:13px;max-width:320px;text-align:center;line-height:1.5}
-#touchUI{display:none;position:fixed;inset:0;pointer-events:none;z-index:22}
-body.touch #touchUI{display:block}
-body.touch #hint{display:none}
-#joyBase{position:absolute;left:24px;bottom:28px;width:112px;height:112px;border-radius:50%;pointer-events:auto;background:rgba(10,25,16,.5);border:2px solid rgba(120,200,140,.35);touch-action:none}
-#joyKnob{position:absolute;left:50%;top:50%;width:50px;height:50px;border-radius:50%;transform:translate(-50%,-50%);background:radial-gradient(circle at 35% 30%,#7ff0d4,#2a9d84)}
-.tbtn{position:absolute;pointer-events:auto;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;touch-action:none;color:#241a05;font-family:'Unbounded';font-weight:700}
-#btnJump{right:26px;bottom:30px;width:70px;height:70px;background:linear-gradient(135deg,#ffd166,#ffb347);font-size:20px}
-#btnSprint{right:110px;bottom:92px;width:56px;height:56px;background:linear-gradient(135deg,#7ff0d4,#3bbf9f);font-size:18px}
-#btnInteract{right:32px;bottom:118px;width:60px;height:60px;background:linear-gradient(135deg,#b48cff,#8a5cf5);color:#fff;font-size:20px;opacity:0;pointer-events:none}
-#btnInteract.show{opacity:1;pointer-events:auto}
-#btnAttack{right:104px;bottom:26px;width:62px;height:62px;background:linear-gradient(135deg,#ff5a5f,#ff9f43);color:#fff;font-size:18px}
-@keyframes spin{to{transform:rotate(360deg)}}
-@media(max-width:640px){
-  .chip{font-size:11px;padding:6px 8px}
-  .bars{min-width:130px}
-  #quest{top:86px;max-width:250px;padding:10px}
-  #questText{font-size:12px}
-  .panel{padding:20px 16px}
-  #equipSlots{grid-template-columns:repeat(3,1fr)}
-  #mapArea{height:340px}
-  .map-node{width:90px}
-  .map-node .mn-name{font-size:9.5px}
-}
-</style>
-</head>
-<body>
-<div id="boot"><div class="spinner"></div><div id="bootText">Мир загружается…</div></div>
-
-<div id="hud">
-  <div class="hud-group">
-    <div class="chip bars">
-      <div class="bar-row"><span>❤️</span><div class="bar"><i id="hpFill"></i></div><span id="hpText">100</span></div>
-      <div class="bar-row"><span>⚡</span><div class="bar"><i id="stFill"></i></div><span id="stText">100</span></div>
-      <div class="bar-row"><span>✦</span><div class="bar"><i id="xpFill"></i></div><span id="lvlText">Ур.1</span></div>
-    </div>
-    <div class="chip">🪙 <span id="coinText">0</span></div>
-    <div class="chip">📍 <span id="locText">Долина</span></div>
-  </div>
-  <div class="hud-group">
-    <button class="icon-btn" id="btnInv" title="Рюкзак (I)">🎒</button>
-    <button class="icon-btn" id="btnMap" title="Карта (M)">🗺️</button>
-    <button class="icon-btn" id="btnSound" title="Звук">
-      <span id="icoSoundOn">🔊</span><span id="icoSoundOff" style="display:none">🔇</span>
-    </button>
-    <button class="icon-btn" id="btnPause" title="Пауза (Esc)">⏸️</button>
-  </div>
+html,body{height:100%;overflow:hidden;background:#17120c;font-family:'PT Sans',sans-serif;color:var(--parch)}
+::-webkit-scrollbar{width:11px;height:11px}::-webkit-scrollbar-track{background:#241c14}::-webkit-scrollbar-thumb{background:var(--wood);border:2px solid #241c14;border-radius:6px}::-webkit-scrollbar-thumb:hover{background:var(--gold)}
+*{scrollbar-width:thin;scrollbar-color:var(--wood) #241c14}
+button,select,input{font-family:'PT Sans',sans-serif}
+#app{display:grid;grid-template-rows:auto 1fr auto;height:100vh;background:
+ radial-gradient(circle at 15% 10%,rgba(122,82,48,.25),transparent 45%),radial-gradient(circle at 85% 85%,rgba(51,80,47,.25),transparent 45%),#17120c}
+header{display:flex;align-items:center;gap:14px;padding:9px 16px;background:linear-gradient(180deg,#2f2418,#241c14);border-bottom:2px solid var(--wood);flex-wrap:wrap}
+.crest{width:34px;height:38px;flex:none;background:var(--gold);clip-path:polygon(50% 0,100% 18%,100% 68%,50% 100%,0 68%,0 18%);display:flex;align-items:center;justify-content:center;font-size:18px;color:#241c14}
+h1{font-family:'Alegreya',serif;font-weight:900;font-size:19px;color:var(--parch);letter-spacing:.4px;line-height:1}
+.sub{font-size:11px;color:var(--dim)}
+.stat{display:flex;align-items:center;gap:6px;background:#1d160f;border:1px solid #4a3a26;border-radius:8px;padding:5px 11px;font-size:13px;font-weight:700}
+.stat b{color:var(--gold)}.stat.pop b{color:var(--moss)}.stat.mil b{color:var(--sky)}
+.spacer{flex:1}
+.speed{display:flex;gap:3px;background:#1d160f;border:1px solid #4a3a26;border-radius:8px;padding:3px}
+.speed button{background:none;border:none;color:var(--dim);padding:4px 9px;border-radius:6px;cursor:pointer;font-weight:700;font-size:12px}
+.speed button.on{background:var(--wood);color:var(--parch)}
+.ib{width:34px;height:34px;border-radius:8px;border:1px solid #4a3a26;background:#1d160f;color:var(--parch);cursor:pointer;font-size:15px}
+.ib:hover{border-color:var(--gold)}
+main{display:grid;grid-template-columns:1fr 372px;gap:12px;padding:12px;overflow:hidden}
+#mapWrap{position:relative;border:3px solid var(--wood);border-radius:12px;overflow:hidden;background:#c9b894;box-shadow:inset 0 0 60px rgba(60,40,20,.5)}
+#map{display:block;width:100%;height:100%;cursor:pointer}
+#mapTip{position:absolute;pointer-events:none;background:rgba(36,28,20,.95);border:1px solid var(--gold);border-radius:8px;padding:7px 11px;font-size:12px;opacity:0;transition:.12s;max-width:230px;line-height:1.45}
+aside{display:flex;flex-direction:column;gap:10px;overflow-y:auto;padding-right:4px}
+.card{background:linear-gradient(170deg,var(--parch),var(--parch2));color:var(--ink);border:2px solid var(--wood);border-radius:11px;padding:13px 15px;box-shadow:0 6px 18px rgba(0,0,0,.4)}
+.card h2{font-family:'Alegreya',serif;font-size:19px;font-weight:900;margin-bottom:2px}
+.card .lord{font-size:12px;color:#6b5636;margin-bottom:9px;font-style:italic}
+.row{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:3px 0;border-bottom:1px dotted #b6a681}
+.row:last-child{border:none}.row b{font-weight:700}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin:8px 0}
+.res{display:flex;align-items:center;gap:6px;background:rgba(122,82,48,.13);border-radius:7px;padding:5px 8px;font-size:12.5px;font-weight:700}
+.blds{display:flex;flex-wrap:wrap;gap:4px;margin:7px 0}
+.bld{background:rgba(51,80,47,.16);border:1px solid rgba(51,80,47,.35);border-radius:6px;padding:3px 7px;font-size:11.5px;font-weight:700}
+.bar{height:7px;background:#c2b28e;border-radius:4px;overflow:hidden;margin-top:3px}
+.bar>i{display:block;height:100%}
+.lbl{font-size:10.5px;text-transform:uppercase;letter-spacing:1.2px;color:#6b5636;font-weight:700;margin:9px 0 4px}
+.btn{width:100%;background:linear-gradient(180deg,var(--wood),#5e3d22);color:var(--parch);border:1px solid #4a3018;border-radius:8px;padding:9px;font-weight:700;font-size:13px;cursor:pointer;margin-top:6px;font-family:'Alegreya',serif;letter-spacing:.3px}
+.btn:hover{filter:brightness(1.15)}.btn:disabled{opacity:.42;cursor:not-allowed;filter:none}
+.btn.gold{background:linear-gradient(180deg,var(--gold),#9c7a15);color:#241c14;border-color:#7a5f0f}
+.btn.red{background:linear-gradient(180deg,var(--blood),#7d2519);border-color:#5e1c12}
+.btn.sm{padding:6px;font-size:12px;margin-top:4px}
+.seg{display:flex;gap:3px;margin-top:5px}
+.seg button{flex:1;background:rgba(122,82,48,.16);border:1px solid #b6a681;color:#5a4830;border-radius:6px;padding:5px 3px;font-size:11px;font-weight:700;cursor:pointer}
+.seg button.on{background:var(--forest);color:var(--parch);border-color:var(--forest)}
+input[type=range]{width:100%;accent-color:var(--wood);margin-top:5px}
+footer{background:#1d160f;border-top:2px solid var(--wood);padding:7px 14px;max-height:118px;overflow-y:auto}
+footer .lbl{color:var(--dim);margin:0 0 4px}
+.le{font-size:12.5px;padding:2px 0;line-height:1.45;border-bottom:1px solid #2b2318}
+.le span{color:var(--dim);font-size:11px;margin-right:6px}
+#alerts{position:fixed;left:50%;top:64px;transform:translateX(-50%);z-index:40;display:flex;flex-direction:column;gap:8px;align-items:center}
+.alert{background:linear-gradient(170deg,#3a1c14,#2a140e);border:2px solid var(--blood);border-radius:11px;padding:11px 18px;text-align:center;box-shadow:0 8px 28px rgba(0,0,0,.6);animation:pop .3s}
+.alert .at{font-family:'Alegreya',serif;font-weight:900;font-size:16px;color:#ffb9a8}
+.alert .as{font-size:12px;color:var(--parch);margin:3px 0 7px}
+@keyframes pop{from{transform:scale(.9);opacity:0}to{transform:none;opacity:1}}
+.ov{position:fixed;inset:0;z-index:50;background:rgba(12,9,6,.86);display:flex;align-items:center;justify-content:center;padding:18px;backdrop-filter:blur(3px)}
+.ov.hide{display:none}
+.modal{width:min(560px,95vw);max-height:90vh;overflow:auto;background:linear-gradient(170deg,var(--parch),var(--parch2));color:var(--ink);border:3px solid var(--wood);border-radius:14px;padding:24px 26px}
+.modal h2{font-family:'Alegreya',serif;font-size:25px;font-weight:900;text-align:center;margin-bottom:4px}
+.modal p{font-size:13.5px;line-height:1.55;color:#4a3a26;text-align:center;margin-bottom:12px}
+.pick{display:flex;flex-direction:column;gap:5px;margin:10px 0;max-height:210px;overflow:auto}
+.pick button{display:flex;justify-content:space-between;align-items:center;background:rgba(122,82,48,.12);border:1px solid #b6a681;border-radius:8px;padding:8px 12px;cursor:pointer;font-size:13px;color:var(--ink);text-align:left}
+.pick button.on{background:var(--forest);color:var(--parch);border-color:var(--forest)}
+#battle{position:fixed;inset:0;z-index:60;display:none;background:#0d0a07}
+#battle.on{display:block}
+#bcanvas{display:block;width:100%;height:100%}
+#bhud{position:absolute;left:0;right:0;top:0;display:flex;justify-content:space-between;padding:12px 16px;pointer-events:none;font-family:'Alegreya',serif}
+.bside{background:rgba(20,15,10,.8);border:2px solid var(--wood);border-radius:10px;padding:8px 14px;min-width:170px}
+.bside .t{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim)}
+.bside .v{font-size:21px;font-weight:900}
+#bmsg{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);text-align:center;font-family:'Alegreya',serif;opacity:0;transition:.4s;pointer-events:none}
+#bmsg.on{opacity:1}#bmsg .m1{font-size:44px;font-weight:900;text-shadow:0 4px 20px #000}#bmsg .m2{font-size:15px;color:var(--parch)}
+#bhelp{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);background:rgba(20,15,10,.8);border:1px solid var(--wood);border-radius:9px;padding:7px 15px;font-size:12.5px;color:var(--dim)}
+#bhp{position:absolute;left:16px;bottom:16px;width:230px}
+#bhp .bar{height:12px;background:#2a2118;border:1px solid var(--wood)}
+@media(max-width:980px){main{grid-template-columns:1fr;grid-template-rows:280px 1fr}aside{max-height:none}}
+</style></head><body>
+<div id="app">
+<header>
+ <div class="crest">🦅</div>
+ <div><h1>Вороний Камень</h1><div class="sub" id="date">—</div></div>
+ <div class="stat">🪙 <b id="hCoin">0</b></div>
+ <div class="stat pop">👥 <b id="hPop">0</b></div>
+ <div class="stat mil">⚔️ <b id="hMil">0</b></div>
+ <div class="stat">🏰 <b id="hLand">0</b>/7</div>
+ <div class="spacer"></div>
+ <div class="speed" id="speed"><button data-s="0">❚❚</button><button data-s="1" class="on">▶</button><button data-s="2">▶▶</button><button data-s="4">▶▶▶</button></div>
+ <button class="ib" id="snd" title="Звук">🔊</button>
+ <button class="ib" id="help" title="Совет">📜</button>
+</header>
+<main>
+ <div id="mapWrap"><canvas id="map"></canvas><div id="mapTip"></div></div>
+ <aside id="side"></aside>
+</main>
+<footer><div class="lbl">Хроника</div><div id="log"></div></footer>
 </div>
-
-<div id="quest"><div class="q-eyebrow">Текущая цель</div><div id="questText"></div><div id="questProgress"></div></div>
-<div id="prompt"><kbd>E</kbd><span id="promptText"></span></div>
-<div id="toast"></div>
-<div id="hint"><b>WASD</b> движение · <kbd>Shift</kbd> бег · <kbd>Пробел</kbd> прыжок · <kbd>E</kbd> добыча · <kbd>F</kbd> атака · <kbd>I</kbd> рюкзак · <kbd>M</kbd> карта</div>
-<div id="lootFeed"></div>
-
-<div id="touchUI">
-  <div id="joyBase"><div id="joyKnob"></div></div>
-  <button class="tbtn" id="btnSprint">⚡</button>
-  <button class="tbtn" id="btnJump">⤒</button>
-  <button class="tbtn" id="btnInteract">E</button>
-  <button class="tbtn" id="btnAttack">⚔</button>
+<div id="alerts"></div>
+<div class="ov hide" id="ovCampaign"><div class="modal">
+ <h2>Военный совет</h2><p id="cSub">Выберите цель похода</p>
+ <div class="lbl">Откуда выступаем</div><select id="cFrom" style="width:100%;padding:8px;border-radius:8px;border:1px solid #b6a681;background:#f2e8d2;color:#241c14"></select>
+ <div class="lbl">Цель</div><div class="pick" id="cTargets"></div>
+ <div class="lbl">Ополчение: <b id="cMilN">0</b> · Ратники: <b id="cGarN">0</b></div>
+ <input type="range" id="cMil" min="0" max="0" value="0"><input type="range" id="cGar" min="0" max="0" value="0">
+ <div class="seg" id="cType"><button data-r="0" class="on">⚔️ Захват</button><button data-r="1">🔥 Набег</button></div>
+ <button class="btn gold" id="cLead">Возглавить лично</button>
+ <button class="btn" id="cAuto">Доверить воеводе (авторасчёт)</button>
+ <button class="btn sm" id="cCancel">Отмена</button>
+</div></div>
+<div class="ov hide" id="ovBattleAsk"><div class="modal">
+ <h2 id="baT">Битва</h2><p id="baP"></p>
+ <button class="btn gold" id="baLead">Возглавить лично</button>
+ <button class="btn" id="baAuto">Доверить командирам</button>
+</div></div>
+<div class="ov hide" id="ovHelp"><div class="modal">
+ <h2>Совет лорду</h2>
+ <p>Ваши подданные живут сами: пашут, рубят лес, добывают камень и железо, ткут сукно, ставят дворы и растут числом. Стройки идут сами — вы лишь задаёте <b>уклад</b> сектора и <b>подать</b>.</p>
+ <p><b>Ополчение</b> созывается из жителей — пока оно под ружьём, поля и промыслы стоят. <b>Ратники</b> — постоянная дружина за монету. Частокол и казармы решают исход обороны.</p>
+ <p>Соседи делают то же самое: копят силу и ходят в набеги и походы. Перехватывайте войско на карте или встречайте его у стен — <b>личное участие</b> в сече переламывает исход.</p>
+ <p>В бою: <b>WASD</b> — движение, <b>ЛКМ</b> — удар, <b>Q</b> — кувырок, <b>Shift</b> — бег. Победа в сече даёт войску перевес.</p>
+ <button class="btn" id="helpClose">Понятно</button>
+</div></div>
+<div id="battle"><canvas id="bcanvas"></canvas>
+ <div id="bhud"><div class="bside"><div class="t">Наши</div><div class="v" id="bAlly" style="color:#8fc46a">0</div></div>
+ <div class="bside" style="text-align:right"><div class="t">Неприятель</div><div class="v" id="bEnemy" style="color:#e07a68">0</div></div></div>
+ <div id="bhp"><div class="t" style="font-size:11px;color:#8a7a5e">Здоровье лорда</div><div class="bar"><i id="bhpF" style="background:linear-gradient(90deg,#a8382a,#c9a227);width:100%"></i></div></div>
+ <div id="bmsg"><div class="m1"></div><div class="m2"></div></div>
+ <div id="bhelp">WASD — движение · ЛКМ — удар · Q — кувырок · Shift — бег</div>
 </div>
-
-<div class="overlay" id="overlayIntro">
-  <div class="panel">
-    <div class="eyebrow">стартовая локация · обучение</div>
-    <h1>ДОЛИНА СВЕТЛЯЧКОВ</h1>
-    <p class="story">Долина — безопасный дом. Здесь вы научитесь добывать ресурсы, крафтить и торговать. За её пределами — опасные земли, где враги сильнее, а редкие предметы добываются тяжело. Соберите снаряжение, заработайте монеты и отправляйтесь дальше.</p>
-    <div class="btn-row">
-      <button class="btn-primary" id="btnStart">НАЧАТЬ ПУТЬ</button>
-      <button class="btn-ghost" id="btnContinue" style="display:none">Продолжить</button>
-    </div>
-    <div class="story" id="introSaveInfo" style="margin-top:14px;font-size:12px"></div>
-  </div>
-</div>
-
-<div class="overlay hidden" id="overlayPause">
-  <div class="panel">
-    <div class="eyebrow">пауза</div>
-    <h2>Привал</h2>
-    <div class="quality-row">
-      <span>Качество:</span>
-      <select id="qualitySelect">
-        <option value="high">Высокое</option>
-        <option value="medium" selected>Среднее</option>
-        <option value="low">Низкое</option>
-      </select>
-      <span>FPS: <b id="fpsText">—</b></span>
-    </div>
-    <div class="btn-row">
-      <button class="btn-primary" id="btnResume">Продолжить</button>
-      <button class="btn-ghost" id="btnNewGame">Новая игра</button>
-    </div>
-    <div class="story" style="margin-top:14px;font-size:12px">Прогресс сохраняется автоматически. Если тормозит — поставьте низкое качество.</div>
-  </div>
-</div>
-
-<div class="overlay hidden" id="overlayInv">
-  <div class="panel wide">
-    <div class="eyebrow">рюкзак и снаряжение</div>
-    <h2>Инвентарь</h2>
-    <div id="statLine"></div>
-    <div id="equipSlots"></div>
-    <div class="filter-row" id="invFilters"></div>
-    <div id="invGrid"></div>
-    <div id="invDetail">Выберите предмет, чтобы увидеть его атрибуты.</div>
-    <div class="btn-row"><button class="btn-ghost" id="btnInvClose">Закрыть</button></div>
-  </div>
-</div>
-
-<div class="overlay hidden" id="overlayCraft">
-  <div class="panel wide">
-    <div class="eyebrow">верстак</div>
-    <h2>Крафт</h2>
-    <div class="story" style="font-size:12px">Каждый предмет подписан: оружие, броня, еда, зелье или материал. Фильтруйте по типу.</div>
-    <div class="filter-row" id="craftFilters"></div>
-    <div id="craftList"></div>
-    <div class="btn-row"><button class="btn-ghost" id="btnCraftClose">Закрыть</button></div>
-  </div>
-</div>
-
-<div class="overlay hidden" id="overlayTrade">
-  <div class="panel wide">
-    <div class="eyebrow">торговец Марк</div>
-    <h2>Торговля</h2>
-    <div class="story" style="font-size:13px">Ваши монеты: <b id="tradeCoins" style="color:var(--amber)">0</b> 🪙</div>
-    <div id="tradeTabs">
-      <button class="trade-tab active" data-tab="buy">Купить</button>
-      <button class="trade-tab" data-tab="sell">Продать</button>
-    </div>
-    <div id="tradeList"></div>
-    <div class="btn-row"><button class="btn-ghost" id="btnTradeClose">Закрыть</button></div>
-  </div>
-</div>
-
-<div class="overlay hidden" id="overlayMap">
-  <div class="panel map">
-    <div class="eyebrow">большая карта мира</div>
-    <h2>Земли Светлячков</h2>
-    <div id="mapArea"></div>
-    <div id="mapDetail"></div>
-    <div class="btn-row">
-      <button class="btn-primary" id="btnTravel" disabled>Отправиться</button>
-      <button class="btn-ghost" id="btnMapClose">Закрыть</button>
-    </div>
-  </div>
-</div>
-
-<div class="overlay hidden" id="overlayDeath">
-  <div class="panel">
-    <div class="eyebrow">вы пали</div>
-    <h2 style="color:var(--danger)">Тьма взяла своё</h2>
-    <p class="story" id="deathText"></p>
-    <div class="btn-row"><button class="btn-primary" id="btnRespawn">Вернуться в долину</button></div>
-  </div>
-</div>
-
-<div id="transition"><div class="spinner"></div><div class="t-title" id="transitionText"></div></div>
-
-<script>
-window.__fmReady=false;
-window.addEventListener('error',function(e){
-  if(!window.__fmReady){var el=document.getElementById('bootText');if(el)el.textContent='Ошибка: '+(e.message||'загрузка')+'. Обновите страницу.';}
-});
-setTimeout(function(){if(!window.__fmReady)document.getElementById('bootText').textContent='Загрузка затянулась. Проверьте интернет и обновите страницу.';},12000);
-if('ontouchstart' in window)document.body.classList.add('touch');
-</script>
-<script src="js/data.js"></script>
-<script src="js/skins.js"></script>
-<script type="importmap">
-{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
-</script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
 <script type="module" src="js/game.js"></script>
-</body>
-</html>
+</body></html>
