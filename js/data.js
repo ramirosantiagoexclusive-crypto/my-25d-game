@@ -1,6 +1,6 @@
 /* =====================================================================
-   БАЗА КОНТЕНТА. Крепость в центре, 6 лагерей вокруг. Ближний бой — основа,
-   огнестрел — редкая роскошь с боеприпасами. Волн и смены суток нет.
+   БАЗА КОНТЕНТА. Крепость в центре, 6 секторов с лидерами.
+   Лидеры качают армии и захватывают сектора. Игрок качает крепость и ботов.
    ===================================================================== */
 window.GAME_DATA = {
   rarities: {
@@ -9,12 +9,12 @@ window.GAME_DATA = {
     legendary:{name:'Легендарный',color:'#ffd166',order:4}, mythic:{name:'Мифический',color:'#ff5a7a',order:5}
   },
   categories: {
-    resource:{name:'Ресурс',icon:'⛏️',color:'#9fb8a0',purpose:'Сырьё для крафта.'},
+    resource:{name:'Ресурс',icon:'⛏️',color:'#9fb8a0',purpose:'Сырьё для крафта и стройки.'},
     material:{name:'Материал',icon:'🧱',color:'#c9b98a',purpose:'Заготовка для крафта.'},
     tool:{name:'Инструмент',icon:'⛏️',color:'#7ee081',purpose:'Слот «Инструмент». Для добычи.'},
     weapon:{name:'Ближний бой',icon:'⚔️',color:'#ff5a5f',purpose:'Слот «Оружие». Основной бой (ЛКМ).'},
     gun:{name:'Огнестрел',icon:'🔫',color:'#ffd166',purpose:'Слот «Огнестрел». Роскошь. ПКМ, тратит патроны.'},
-    ammo:{name:'Боеприпасы',icon:'🧰',color:'#ffb347',purpose:'Патроны для огнестрела. Дорогие и редкие.'},
+    ammo:{name:'Боеприпасы',icon:'🧰',color:'#ffb347',purpose:'Патроны для огнестрела.'},
     armor:{name:'Броня',icon:'🛡️',color:'#6fc3ff',purpose:'Слот «Броня». Защита.'},
     charm:{name:'Амулет',icon:'🧿',color:'#b48cff',purpose:'Слот «Амулет». Бонусы.'},
     food:{name:'Еда',icon:'🍖',color:'#7ee081',purpose:'Восстанавливает здоровье и силы.'},
@@ -22,7 +22,7 @@ window.GAME_DATA = {
     quest:{name:'Особое',icon:'🎫',color:'#ffd166',purpose:'Для прогресса.'}
   },
   items: {
-    wood:{name:'Древесина',cat:'resource',rarity:'common',icon:'🪵',value:2,weight:1,desc:'Основа крафта.'},
+    wood:{name:'Древесина',cat:'resource',rarity:'common',icon:'🪵',value:2,weight:1,desc:'Основа крафта и стройки.'},
     stone:{name:'Камень',cat:'resource',rarity:'common',icon:'🪨',value:2,weight:1.2,desc:'Для инструментов и стен.'},
     fiber:{name:'Волокно',cat:'resource',rarity:'common',icon:'🌾',value:1,weight:.3,desc:'Для верёвок и ткани.'},
     herb:{name:'Травы',cat:'resource',rarity:'common',icon:'🌿',value:3,weight:.2,desc:'Лечебные травы.'},
@@ -44,7 +44,6 @@ window.GAME_DATA = {
     berry:{name:'Ягоды',cat:'food',rarity:'common',icon:'🫐',value:2,weight:.2,desc:'Немного сил.',use:{stamina:10}},
     mushroom:{name:'Гриб',cat:'food',rarity:'common',icon:'🍄',value:3,weight:.3,desc:'Съедобно.',use:{stamina:12}},
     apple:{name:'Яблоко',cat:'food',rarity:'common',icon:'🍎',value:3,weight:.3,desc:'Немного сил.',use:{stamina:18}},
-
     plank:{name:'Доски',cat:'material',rarity:'common',icon:'🟫',value:5,weight:1.2,desc:'Обработанная древесина.'},
     rope:{name:'Верёвка',cat:'material',rarity:'common',icon:'🪢',value:5,weight:.4,desc:'Кручёное волокно.'},
     cloth:{name:'Ткань',cat:'material',rarity:'common',icon:'🧵',value:6,weight:.4,desc:'Из волокна.'},
@@ -55,16 +54,13 @@ window.GAME_DATA = {
     silver_ingot:{name:'Серебряный слиток',cat:'material',rarity:'rare',icon:'🥈',value:45,weight:1.4,desc:'Очищенное серебро.'},
     gold_ingot:{name:'Золотой слиток',cat:'material',rarity:'epic',icon:'🥇',value:85,weight:1.6,desc:'Благородный металл.'},
     gunpowder:{name:'Порох',cat:'material',rarity:'rare',icon:'💥',value:20,weight:.3,desc:'Сера + уголь. Для патронов.'},
-
     ammo:{name:'Патроны',cat:'ammo',rarity:'rare',icon:'🧰',value:12,weight:.1,desc:'Боеприпасы. Каждый выстрел тратит их.'},
-
     stone_axe:{name:'Каменный топор',cat:'tool',slot:'tool',rarity:'common',icon:'🪓',value:14,weight:2,desc:'Рубит деревья.',gatherType:'axe',gatherPower:1},
     stone_pick:{name:'Каменная кирка',cat:'tool',slot:'tool',rarity:'common',icon:'⛏️',value:16,weight:2.2,desc:'Добывает руду и уголь.',gatherType:'pick',gatherPower:1},
     sickle:{name:'Серп',cat:'tool',slot:'tool',rarity:'common',icon:'🌾',value:12,weight:1,desc:'Больше трав.',gatherType:'sickle',gatherPower:1},
     iron_axe:{name:'Железный топор',cat:'tool',slot:'tool',rarity:'uncommon',icon:'🪓',value:70,weight:2.6,desc:'Быстрее рубит.',gatherType:'axe',gatherPower:3},
     iron_pick:{name:'Железная кирка',cat:'tool',slot:'tool',rarity:'uncommon',icon:'⛏️',value:75,weight:2.8,desc:'Добывает золото.',gatherType:'pick',gatherPower:3},
     steel_pick:{name:'Стальная кирка',cat:'tool',slot:'tool',rarity:'rare',icon:'⛏️',value:160,weight:2.8,desc:'Для высшей руды.',gatherType:'pick',gatherPower:4,luck:5},
-
     club:{name:'Дубина',cat:'weapon',slot:'weapon',rarity:'common',icon:'🏏',value:12,weight:2,desc:'Простое оружие.',atk:6,reach:2.2,speed:.42},
     spear:{name:'Копьё',cat:'weapon',slot:'weapon',rarity:'common',icon:'🔱',value:22,weight:2.2,desc:'Длинное.',atk:8,reach:2.8,speed:.5},
     bronze_sword:{name:'Бронзовый меч',cat:'weapon',slot:'weapon',rarity:'uncommon',icon:'🗡️',value:60,weight:2.4,desc:'Надёжный клинок.',atk:12,reach:2.4,speed:.38},
@@ -73,32 +69,27 @@ window.GAME_DATA = {
     steel_sword:{name:'Стальной меч',cat:'weapon',slot:'weapon',rarity:'rare',icon:'⚔️',value:200,weight:2.5,desc:'Отличная сталь.',atk:26,reach:2.5,speed:.34},
     warhammer:{name:'Боевой молот',cat:'weapon',slot:'weapon',rarity:'epic',icon:'🔨',value:320,weight:3.5,desc:'Сокрушает.',atk:36,reach:2.4,speed:.6},
     silver_blade:{name:'Серебряный клинок',cat:'weapon',slot:'weapon',rarity:'epic',icon:'⚔️',value:380,weight:2.2,desc:'Против нежити.',atk:32,reach:2.5,speed:.32,luck:4},
-
     pistol:{name:'Пистолет',cat:'gun',slot:'gun',rarity:'rare',icon:'🔫',value:220,weight:2,desc:'Роскошь. 1 патрон за выстрел.',gun:{dmg:34,rate:2.6,spread:.03,pellets:1,speed:38,ammoCost:1,pierce:0,color:0xffd166}},
     shotgun:{name:'Дробовик',cat:'gun',slot:'gun',rarity:'epic',icon:'🔫',value:420,weight:3,desc:'Веер дроби. 2 патрона.',gun:{dmg:16,rate:1.1,spread:.26,pellets:6,speed:28,ammoCost:2,pierce:0,color:0xff9f43}},
     rifle:{name:'Винтовка',cat:'gun',slot:'gun',rarity:'legendary',icon:'🔫',value:700,weight:3,desc:'Пробивает насквозь. 1 патрон.',gun:{dmg:70,rate:1.3,spread:.01,pellets:1,speed:52,ammoCost:1,pierce:3,color:0x7ee081}},
-
     cloth_vest:{name:'Тканевый жилет',cat:'armor',slot:'armor',rarity:'common',icon:'🧥',value:18,weight:1.5,desc:'Минимум защиты.',def:2},
     leather_armor:{name:'Кожаная броня',cat:'armor',slot:'armor',rarity:'uncommon',icon:'🦺',value:70,weight:2.5,desc:'Прочная.',def:6},
     bronze_mail:{name:'Бронзовая кольчуга',cat:'armor',slot:'armor',rarity:'uncommon',icon:'🛡️',value:110,weight:3.8,desc:'Крепкая.',def:10},
     iron_mail:{name:'Железная кольчуга',cat:'armor',slot:'armor',rarity:'rare',icon:'🛡️',value:200,weight:4,desc:'Надёжная.',def:15},
     steel_plate:{name:'Стальные латы',cat:'armor',slot:'armor',rarity:'epic',icon:'🛡️',value:420,weight:5,desc:'Тяжёлая защита.',def:24},
-
     lucky_pebble:{name:'Счастливый камешек',cat:'charm',slot:'charm',rarity:'uncommon',icon:'🍀',value:35,weight:.2,desc:'Удача.',luck:4},
     wolf_fang:{name:'Клык волка',cat:'charm',slot:'charm',rarity:'rare',icon:'🦷',value:90,weight:.3,desc:'Сила и удача.',atk:3,luck:3},
     silver_ring:{name:'Серебряное кольцо',cat:'charm',slot:'charm',rarity:'rare',icon:'💍',value:120,weight:.1,desc:'Удача и защита.',luck:6,def:2},
     gold_ring:{name:'Золотое кольцо',cat:'charm',slot:'charm',rarity:'epic',icon:'💍',value:260,weight:.1,desc:'Богатство.',luck:10},
-
     bread:{name:'Хлеб',cat:'food',rarity:'common',icon:'🍞',value:8,weight:.4,desc:'Силы.',use:{heal:8,stamina:25}},
     cooked_meat:{name:'Жареное мясо',cat:'food',rarity:'uncommon',icon:'🍖',value:20,weight:.6,desc:'Сытно.',use:{heal:26,stamina:30}},
     mushroom_soup:{name:'Грибной суп',cat:'food',rarity:'uncommon',icon:'🍲',value:22,weight:.7,desc:'Снимает яд.',use:{heal:18,stamina:30,curePoison:true}},
     healing_potion:{name:'Зелье лечения',cat:'potion',rarity:'rare',icon:'🧪',value:45,weight:.5,desc:'Лечит.',use:{heal:45}},
     stamina_potion:{name:'Зелье бодрости',cat:'potion',rarity:'rare',icon:'⚗️',value:40,weight:.5,desc:'Силы.',use:{stamina:70}},
     antidote:{name:'Противоядие',cat:'potion',rarity:'uncommon',icon:'💊',value:30,weight:.3,desc:'Снимает яд.',use:{curePoison:true}},
-
     fortress_sigil:{name:'Печать крепости',cat:'quest',rarity:'rare',icon:'🛡️',value:0,weight:.1,desc:'Символ защитника крепости.'}
   },
-  recipes: [
+  recipes:[
     {out:'plank',n:2,mats:{wood:2},level:1},{out:'rope',n:1,mats:{fiber:3},level:1},{out:'cloth',n:1,mats:{fiber:4},level:1},
     {out:'leather_strip',n:2,mats:{leather:1},level:1},
     {out:'bronze_ingot',n:1,mats:{copper_ore:2,tin_ore:1,coal:1},level:2},
@@ -132,7 +123,7 @@ window.GAME_DATA = {
     {out:'antidote',n:1,mats:{herb:3,mushroom:1},level:2}
   ],
   merchantStock:['bread','apple','cooked_meat','healing_potion','stamina_potion','antidote','cloth_vest','club','spear','stone_axe','stone_pick','sickle','ammo','gunpowder','coal','rope'],
-  enemies: {
+  enemies:{
     grunt:{name:'Пакостник',hp:22,atk:6,speed:3.0,xp:14,coins:[1,3],color:0x8bc34a,size:.75,kind:'blob',loot:[{item:'fiber',chance:.3},{item:'herb',chance:.2},{item:'bone',chance:.15}]},
     runner:{name:'Бегун',hp:16,atk:5,speed:5.0,xp:16,coins:[1,3],color:0xffb347,size:.65,kind:'blob',loot:[{item:'fiber',chance:.25},{item:'meat',chance:.2}]},
     brute:{name:'Толстяк',hp:60,atk:12,speed:2.0,xp:34,coins:[3,6],color:0x9c6b4a,size:1.25,kind:'brute',loot:[{item:'leather',chance:.4},{item:'meat',chance:.4},{item:'bone',chance:.3}]},
@@ -144,30 +135,56 @@ window.GAME_DATA = {
     sentinel:{name:'Страж',hp:140,atk:20,speed:2.2,xp:90,coins:[8,15],color:0xb48cff,size:1.55,kind:'golem',loot:[{item:'gold_ore',chance:.2},{item:'crystal_shard',chance:.3},{item:'silver_ore',chance:.3}]},
     raider:{name:'Налётчик',hp:34,atk:9,speed:3.6,xp:26,coins:[2,5],color:0xd9534f,size:.9,kind:'blob',loot:[{item:'iron_ore',chance:.2},{item:'ammo',chance:.06},{item:'leather',chance:.2}]}
   },
-  strategic: {
-    ring:['forest','swamp','peaks','ruins','quarry','crypt'],
-    migrateEvery:15, regrowEvery:24, raidThreshold:60, raidCountdown:45, fortressMaxHP:100
+  leaders:{
+    forest:{name:'Вожак Стаи',trait:'Быстрый',icon:'🐺',color:'#6fc3ff',growth:1.2,aggression:1.35,method:'Стремительные набеги волчьими стаями. Быстро растёт и часто тревожит крепость.'},
+    swamp:{name:'Болотная Карга',trait:'Хитрая',icon:'🧙',color:'#7ee081',growth:1.0,aggression:.85,method:'Изматывает ядом и плевунами. Предпочитает захватывать слабые сектора.'},
+    peaks:{name:'Каменный Тиран',trait:'Жестокий',icon:'🗿',color:'#ff9f43',growth:.85,aggression:1.6,method:'Медленно копит големов, затем бьёт сокрушительным кулаком по крепости.'},
+    ruins:{name:'Смотритель',trait:'Оборонительный',icon:'🛡️',color:'#b48cff',growth:.95,aggression:.55,method:'Укрепляет свои позиции и редко атакует, но его стражи почти несокрушимы.'},
+    quarry:{name:'Рудный Барон',trait:'Жадный',icon:'⛏️',color:'#ffd166',growth:1.45,aggression:.95,method:'Быстро размножает рабочих и скупает соседние сектора численностью.'},
+    crypt:{name:'Костяной Лорд',trait:'Неумолимый',icon:'💀',color:'#ff5a7a',growth:1.1,aggression:1.2,method:'Поднимает павших. Постоянно давит на все стороны, не давая передышки.'}
   },
-  locations: {
-    fortress:{name:'Крепость',center:true,biome:'fortress',ground:[0x6a7a5a,0x7a8a6a],sky:0x9fc0d8,desc:'Ваш дом. Крафт, торговля, отдых. Защищайте её.',unlock:null,maxPop:0,enemies:[],nodes:[]},
-    forest:{name:'Тёмный лес',biome:'forest',ground:[0x3f7a48,0x4f8f55],sky:0x6f9f7a,desc:'Волки и пауки. Кожа, кость, мясо.',maxPop:10,startPop:6,enemyTypes:['wolf','spider','grunt'],
+  botTypes:{
+    soldier:{name:'Солдат',icon:'🗡️',cost:60,hp:60,atk:10,speed:3.4,range:1.7,desc:'Ближний бой. Идёт впереди.'},
+    archer:{name:'Лучник',icon:'🏹',cost:80,hp:40,atk:8,speed:3.0,range:9,ranged:true,desc:'Дальний бой. Держится позади.'},
+    guard:{name:'Страж',icon:'🛡️',cost:100,hp:110,atk:7,speed:2.6,range:1.7,desc:'Танк. Прикрывает вас и крепость.'}
+  },
+  fortressUpgrades:{
+    walls:{name:'Стены',icon:'🧱',max:5,baseCost:60,growth:1.6,effect:'+40 прочности и снижение урона от набегов'},
+    towers:{name:'Башни',icon:'🗼',max:4,baseCost:80,growth:1.7,effect:'Автоматически стреляют по налётчикам'},
+    barracks:{name:'Казармы',icon:'🏠',max:4,baseCost:70,growth:1.6,effect:'+1 место в отряде ботов'},
+    workshop:{name:'Мастерская',icon:'🔧',max:3,baseCost:90,growth:1.7,effect:'Скидка на крафт и стройку'},
+    farm:{name:'Ферма',icon:'🌾',max:3,baseCost:60,growth:1.6,effect:'Пассивный доход монет'}
+  },
+  strategic:{
+    ring:['forest','swamp','peaks','ruins','quarry','crypt'],
+    migrateEvery:16,regrowEvery:26,leaderEvery:13,raidThreshold:62,raidCountdown:50,fortressMaxHP:100
+  },
+  locations:{
+    fortress:{name:'Крепость',center:true,biome:'fortress',ground:[0x6a7a5a,0x7a8a6a],sky:0x9fc0d8,desc:'Ваш дом. Крафт, торговля, отдых и стройка.',unlock:null,maxPop:0,enemies:[],
+      nodes:[
+        {type:'tree',count:6,tool:'axe',minPower:0,base:{item:'wood',min:1,max:2},bonus:[{item:'resin',chance:.2},{item:'apple',chance:.1}]},
+        {type:'rock',count:5,tool:'pick',minPower:0,base:{item:'stone',min:1,max:2},bonus:[{item:'flint',chance:.2},{item:'coal',chance:.15}]},
+        {type:'bush',count:6,tool:null,minPower:0,base:{item:'fiber',min:1,max:2},bonus:[{item:'herb',chance:.3},{item:'berry',chance:.25},{item:'mushroom',chance:.15}]},
+        {type:'coal',count:3,tool:'pick',minPower:0,base:{item:'coal',min:1,max:2},bonus:[{item:'flint',chance:.15}]}
+      ]},
+    forest:{name:'Тёмный лес',biome:'forest',ground:[0x3f7a48,0x4f8f55],sky:0x6f9f7a,desc:'Волки и пауки. Кожа, кость, мясо.',maxPop:12,startPop:6,enemyTypes:['wolf','spider','grunt'],
       nodes:[{type:'tree',count:26,tool:'axe',minPower:0,base:{item:'wood',min:1,max:3},bonus:[{item:'resin',chance:.25},{item:'apple',chance:.1}]},{type:'bush',count:18,tool:null,minPower:0,base:{item:'fiber',min:1,max:2},bonus:[{item:'herb',chance:.3},{item:'berry',chance:.25},{item:'mushroom',chance:.2}]},{type:'coal',count:8,tool:'pick',minPower:0,base:{item:'coal',min:1,max:2},bonus:[{item:'flint',chance:.2}]}]},
-    swamp:{name:'Гнилые топи',biome:'swamp',ground:[0x4f6a3f,0x657f4a],sky:0x7f9f5a,desc:'Яд и плевуны. Сера, травы.',maxPop:10,startPop:5,enemyTypes:['spitter','spider','grunt'],hazard:'poison',
+    swamp:{name:'Гнилые топи',biome:'swamp',ground:[0x4f6a3f,0x657f4a],sky:0x7f9f5a,desc:'Яд и плевуны. Сера, травы.',maxPop:12,startPop:5,enemyTypes:['spitter','spider','grunt'],hazard:'poison',
       nodes:[{type:'bush',count:22,tool:null,minPower:0,base:{item:'herb',min:1,max:2},bonus:[{item:'mushroom',chance:.3},{item:'sulfur',chance:.1}]},{type:'rock',count:12,tool:null,minPower:0,base:{item:'clay',min:1,max:2},bonus:[{item:'sulfur',chance:.2}]},{type:'coal',count:6,tool:'pick',minPower:0,base:{item:'coal',min:1,max:2},bonus:[{item:'sulfur',chance:.15}]}]},
-    peaks:{name:'Пепельные пики',biome:'peaks',ground:[0x7a6a5a,0x9a7a5a],sky:0xaf9f8a,desc:'Големы. Железо, золото, уголь.',maxPop:9,startPop:4,enemyTypes:['golem','brute','runner'],
+    peaks:{name:'Пепельные пики',biome:'peaks',ground:[0x7a6a5a,0x9a7a5a],sky:0xaf9f8a,desc:'Големы. Железо, золото, уголь.',maxPop:11,startPop:4,enemyTypes:['golem','brute','runner'],
       nodes:[{type:'ore',count:16,tool:'pick',minPower:2,base:{item:'iron_ore',min:1,max:2},bonus:[{item:'silver_ore',chance:.12},{item:'gold_ore',chance:.04}]},{type:'rock',count:14,tool:'pick',minPower:0,base:{item:'stone',min:1,max:2},bonus:[{item:'coal',chance:.4},{item:'flint',chance:.2}]},{type:'coal',count:12,tool:'pick',minPower:0,base:{item:'coal',min:2,max:3},bonus:[{item:'sulfur',chance:.2}]}]},
-    ruins:{name:'Древние руины',biome:'ruins',ground:[0x5a5a6a,0x6a6a7a],sky:0x8a8aaf,desc:'Стражи и призраки. Серебро, кристаллы, золото.',maxPop:8,startPop:3,enemyTypes:['sentinel','wraith','spitter'],
+    ruins:{name:'Древние руины',biome:'ruins',ground:[0x5a5a6a,0x6a6a7a],sky:0x8a8aaf,desc:'Стражи и призраки. Серебро, кристаллы, золото.',maxPop:10,startPop:3,enemyTypes:['sentinel','wraith','spitter'],
       nodes:[{type:'crystal',count:10,tool:'pick',minPower:3,base:{item:'crystal_shard',min:1,max:2},bonus:[{item:'silver_ore',chance:.1}]},{type:'ore',count:10,tool:'pick',minPower:3,base:{item:'silver_ore',min:1,max:1},bonus:[{item:'gold_ore',chance:.1}]},{type:'rock',count:8,tool:'pick',minPower:0,base:{item:'stone',min:1,max:2},bonus:[{item:'flint',chance:.2}]}]},
-    quarry:{name:'Каменоломня',biome:'quarry',ground:[0x8a8578,0x9a9588],sky:0xa8a898,desc:'Камень, медь, олово, железо.',maxPop:10,startPop:6,enemyTypes:['grunt','brute','runner'],
+    quarry:{name:'Каменоломня',biome:'quarry',ground:[0x8a8578,0x9a9588],sky:0xa8a898,desc:'Камень, медь, олово, железо.',maxPop:12,startPop:6,enemyTypes:['grunt','brute','runner'],
       nodes:[{type:'rock',count:22,tool:'pick',minPower:0,base:{item:'stone',min:2,max:3},bonus:[{item:'flint',chance:.25},{item:'clay',chance:.15}]},{type:'ore',count:14,tool:'pick',minPower:1,base:{item:'copper_ore',min:1,max:2},bonus:[{item:'tin_ore',chance:.35},{item:'iron_ore',chance:.12}]},{type:'coal',count:8,tool:'pick',minPower:0,base:{item:'coal',min:1,max:2},bonus:[{item:'flint',chance:.15}]}]},
-    crypt:{name:'Костяной склеп',biome:'crypt',ground:[0x5a5a52,0x6a6a62],sky:0x8a8a80,desc:'Нежить. Кость, серебро, кристаллы.',maxPop:9,startPop:4,enemyTypes:['wraith','spider','brute'],
+    crypt:{name:'Костяной склеп',biome:'crypt',ground:[0x5a5a52,0x6a6a62],sky:0x8a8a80,desc:'Нежить. Кость, серебро, кристаллы.',maxPop:11,startPop:4,enemyTypes:['wraith','spider','brute'],
       nodes:[{type:'rock',count:14,tool:'pick',minPower:0,base:{item:'stone',min:1,max:2},bonus:[{item:'bone',chance:.3}]},{type:'crystal',count:6,tool:'pick',minPower:2,base:{item:'crystal_shard',min:1,max:1},bonus:[{item:'silver_ore',chance:.1}]},{type:'bush',count:10,tool:null,minPower:0,base:{item:'fiber',min:1,max:2},bonus:[{item:'herb',chance:.3}]}]}
   },
   tutorial:[
-    {text:'Соберите 4 древесины и 3 камня (E).',type:'gather',need:{wood:4,stone:3}},
+    {text:'Соберите 4 древесины и 3 камня прямо в крепости (E).',type:'gather',need:{wood:4,stone:3}},
     {text:'Создайте дубину или копьё на верстаке.',type:'haveAny',need:['club','spear']},
     {text:'Экипируйте оружие ближнего боя (I).',type:'equipSlot',slot:'weapon'},
-    {text:'Откройте карту (M) и отправляйтесь в любой лагерь.',type:'travelAny'},
-    {text:'Зачистите лагерь (убейте всех врагов) и вернитесь в крепость.',type:'clearAny'}
+    {text:'Откройте карту (M) и отправляйтесь в любой сектор.',type:'travelAny'},
+    {text:'Зачистите сектор и вернитесь в крепость (кликните 🏰 на карте).',type:'clearAny'}
   ]
 };
