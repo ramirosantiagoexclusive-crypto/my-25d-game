@@ -1,0 +1,126 @@
+<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Вороний Камень — хроника лорда</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23241c14'/><path d='M16 4l10 6v9c0 7-5 10-10 12-5-2-10-5-10-12v-9z' fill='%23c9a227'/></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Alegreya:wght@500;700;900&family=PT+Sans:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#241c14;--parch:#e9dcbe;--parch2:#d8c9a4;--wood:#7a5230;--forest:#33502f;--iron:#6d7480;--blood:#a8382a;--gold:#c9a227;--moss:#6f9450;--sky:#7fa8c9;--dim:#8a7a5e}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;background:#12100b;font-family:'PT Sans',sans-serif;color:var(--parch);user-select:none}
+::-webkit-scrollbar{width:11px;height:11px}::-webkit-scrollbar-track{background:#241c14}::-webkit-scrollbar-thumb{background:var(--wood);border:2px solid #241c14;border-radius:6px}::-webkit-scrollbar-thumb:hover{background:var(--gold)}
+*{scrollbar-width:thin;scrollbar-color:var(--wood) #241c14}
+button,select,input{font-family:'PT Sans',sans-serif}
+#view{position:fixed;inset:0;display:block}
+#hud{position:fixed;top:0;left:0;right:0;display:flex;gap:9px;align-items:flex-start;padding:10px 13px;pointer-events:none;z-index:20;flex-wrap:wrap}
+.grp{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.chip{display:flex;align-items:center;gap:7px;background:rgba(24,18,12,.86);border:1px solid #4a3a26;border-radius:9px;padding:6px 11px;font-size:13px;font-weight:700;backdrop-filter:blur(5px)}
+.chip b{color:var(--gold)}.chip.pop b{color:var(--moss)}.chip.mil b{color:var(--sky)}
+#hpwrap{min-width:190px}
+.bar{height:9px;background:#2a2118;border:1px solid #4a3a26;border-radius:5px;overflow:hidden;margin-top:4px}
+.bar>i{display:block;height:100%;transition:width .15s}
+#hpF{background:linear-gradient(90deg,#a8382a,#c9a227)}
+#morF{background:linear-gradient(90deg,#6f9450,#8fc46a)}
+.sp{flex:1}
+.ib{pointer-events:auto;width:36px;height:36px;border-radius:9px;border:1px solid #4a3a26;background:rgba(24,18,12,.86);color:var(--parch);cursor:pointer;font-size:16px}
+.ib:hover{border-color:var(--gold);background:#2f2418}
+.ib.on{border-color:var(--gold);color:var(--gold)}
+#place{position:fixed;top:60px;left:13px;z-index:19;background:rgba(24,18,12,.8);border-left:3px solid var(--gold);border-radius:0 9px 9px 0;padding:7px 14px}
+#place .n{font-family:'Alegreya',serif;font-weight:900;font-size:17px}
+#place .s{font-size:11.5px;color:var(--dim)}
+#prompt{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(8px);z-index:22;background:rgba(24,18,12,.93);border:1px solid var(--gold);border-radius:10px;padding:9px 18px;font-size:14px;opacity:0;transition:.16s;display:flex;gap:9px;align-items:center;pointer-events:none}
+#prompt.on{opacity:1;transform:translateX(-50%)}
+kbd{background:#2f2418;border:1px solid #5e4a2e;border-bottom-width:2px;border-radius:5px;padding:1px 7px;font-size:12px;font-weight:700;color:var(--gold)}
+#hint{position:fixed;left:13px;bottom:12px;z-index:19;background:rgba(24,18,12,.75);border:1px solid #3a2e21;border-radius:9px;padding:6px 12px;font-size:12px;color:var(--dim)}
+#feed{position:fixed;right:13px;bottom:12px;z-index:21;display:flex;flex-direction:column;gap:5px;align-items:flex-end;pointer-events:none;max-width:330px}
+.fe{background:rgba(24,18,12,.9);border:1px solid #4a3a26;border-left:3px solid var(--gold);border-radius:7px;padding:5px 11px;font-size:12.5px;animation:fin .25s,fout .4s 3.1s forwards}
+@keyframes fin{from{transform:translateX(22px);opacity:0}}@keyframes fout{to{transform:translateX(22px);opacity:0}}
+#toast{position:fixed;left:50%;top:74px;transform:translateX(-50%) translateY(-8px);z-index:30;background:rgba(24,18,12,.95);border:1px solid var(--gold);border-radius:10px;padding:9px 20px;font-size:14px;opacity:0;transition:.22s;pointer-events:none;text-align:center;max-width:80vw}
+#toast.on{opacity:1;transform:translateX(-50%)}
+#bHud{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:22;display:none;gap:16px;background:rgba(24,18,12,.88);border:1px solid var(--wood);border-radius:11px;padding:9px 20px;font-family:'Alegreya',serif}
+#bHud.on{display:flex}
+#bHud .t{font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--dim)}
+#bHud .v{font-size:21px;font-weight:900}
+.ov{position:fixed;inset:0;z-index:40;background:rgba(12,9,6,.8);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:16px}
+.ov.hide{display:none}
+.modal{width:min(680px,96vw);max-height:92vh;overflow:auto;background:linear-gradient(170deg,var(--parch),var(--parch2));color:var(--ink);border:3px solid var(--wood);border-radius:14px;padding:22px 24px;box-shadow:0 22px 60px rgba(0,0,0,.6)}
+.modal.wide{width:min(1080px,97vw)}
+.modal h2{font-family:'Alegreya',serif;font-size:25px;font-weight:900;text-align:center}
+.modal .sub{font-size:12.5px;color:#6b5636;text-align:center;font-style:italic;margin-bottom:12px}
+.lbl{font-size:10.5px;text-transform:uppercase;letter-spacing:1.3px;color:#6b5636;font-weight:700;margin:12px 0 5px}
+.btn{width:100%;background:linear-gradient(180deg,var(--wood),#5b3c21);color:var(--parch);border:1px solid #432c15;border-radius:8px;padding:10px;font-weight:700;font-size:13.5px;cursor:pointer;margin-top:7px;font-family:'Alegreya',serif;letter-spacing:.3px}
+.btn:hover{filter:brightness(1.16)}.btn:disabled{opacity:.4;cursor:not-allowed;filter:none}
+.btn.gold{background:linear-gradient(180deg,var(--gold),#9a7813);color:#241c14;border-color:#785d0d}
+.btn.red{background:linear-gradient(180deg,var(--blood),#7a2317);border-color:#5c1a11}
+.btn.sm{padding:6px;font-size:12px;margin-top:4px;width:auto;padding-left:12px;padding-right:12px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13px;padding:5px 0;border-bottom:1px dotted #b6a681}
+.row:last-child{border:none}.row b{font-weight:700}
+.card{background:rgba(122,82,48,.1);border:1px solid #b6a681;border-radius:9px;padding:10px 12px;margin-bottom:7px}
+.card .ct{font-family:'Alegreya',serif;font-weight:700;font-size:15px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.card .cd{font-size:11.5px;color:#5a4830;margin-top:3px;line-height:1.45}
+.card .cb{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+.tag{background:rgba(51,80,47,.16);border:1px solid rgba(51,80,47,.35);border-radius:5px;padding:2px 7px;font-size:11px;font-weight:700}
+.tag.no{background:rgba(168,56,42,.14);border-color:rgba(168,56,42,.4);color:#8a2a1e}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+#mapOv{display:grid;grid-template-columns:1fr 340px;gap:12px}
+#mapBox{position:relative;border:3px solid var(--wood);border-radius:11px;overflow:hidden;background:#c9b894;height:min(70vh,620px)}
+#mapC{display:block;width:100%;height:100%;cursor:crosshair}
+#mapSide{max-height:min(70vh,620px);overflow:auto;padding-right:4px}
+.speed{display:flex;gap:3px;background:rgba(122,82,48,.14);border:1px solid #b6a681;border-radius:8px;padding:3px;margin-bottom:8px}
+.speed button{flex:1;background:none;border:none;color:#5a4830;padding:5px;border-radius:5px;cursor:pointer;font-weight:700;font-size:12px}
+.speed button.on{background:var(--wood);color:var(--parch)}
+#log{max-height:150px;overflow:auto;font-size:12px;line-height:1.5}
+#log div{padding:2px 0;border-bottom:1px dotted #b6a681}
+#log span{color:#7a6444;font-size:10.5px;margin-right:5px}
+#bmsg{position:fixed;left:50%;top:42%;transform:translate(-50%,-50%);z-index:35;text-align:center;font-family:'Alegreya',serif;opacity:0;transition:.4s;pointer-events:none}
+#bmsg.on{opacity:1}#bmsg .m1{font-size:46px;font-weight:900;text-shadow:0 4px 22px #000}#bmsg .m2{font-size:15px}
+@media(max-width:900px){#mapOv{grid-template-columns:1fr;grid-template-rows:300px 1fr}#mapBox{height:300px}}
+</style><meta property="og:image" content="https://bolt.new/static/og_default.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://bolt.new/static/og_default.png">  <script type="module" crossorigin src="./assets/index-Cgdx3IsC.js"></script>
+</head><body>
+<canvas id="view"></canvas>
+<div id="hud">
+ <div class="grp">
+  <div class="chip" id="hpwrap"><div style="flex:1"><div style="display:flex;justify-content:space-between"><span>❤️ Здоровье</span><b id="hpT">100</b></div><div class="bar"><i id="hpF"></i></div></div></div>
+  <div class="chip" style="min-width:150px"><div style="flex:1"><div style="display:flex;justify-content:space-between"><span>🎖️ Дух</span><b id="morT">70</b></div><div class="bar"><i id="morF"></i></div></div></div>
+ </div>
+ <div class="grp">
+  <div class="chip">🪙 <b id="hGold">0</b></div>
+  <div class="chip pop">👥 <b id="hParty">0</b></div>
+  <div class="chip">🌾 <b id="hFood">0</b></div>
+  <div class="chip mil">🏵️ <b id="hRen">0</b></div>
+  <div class="chip">📅 <b id="hDay">1</b></div>
+ </div>
+ <div class="sp"></div>
+ <div class="grp">
+  <button class="ib" id="bMap" title="Карта мира (M)">🗺️</button>
+  <button class="ib" id="bParty" title="Отряд (P)">⚔️</button>
+  <button class="ib" id="bRealm" title="Владения (R)">🏰</button>
+  <button class="ib" id="bSave" title="Сохранить (F5)">💾</button>
+  <button class="ib" id="bSnd" title="Звук">🔊</button>
+  <button class="ib" id="bHelp" title="Наука (H)">📜</button>
+ </div>
+</div>
+<div id="place"><div class="n">—</div><div class="s">—</div></div>
+<div id="prompt"><kbd>E</kbd><span id="promptT"></span></div>
+<div id="hint"><b>WASD</b> ходьба · <b>мышь</b> прицел · <b>ЛКМ</b> удар · <b>Q</b> кувырок · <b>Shift</b> бег · <b>E</b> действие · <b>M</b> карта · <b>F5</b> сохранить</div>
+<div id="feed"></div><div id="toast"></div>
+<div id="bHud"><div><div class="t">Наши</div><div class="v" id="bAl" style="color:#8fc46a">0</div></div>
+ <div><div class="t">Неприятель</div><div class="v" id="bEn" style="color:#e07a68">0</div></div>
+ <div><div class="t">Приказ</div><div class="v" id="bOrd" style="font-size:15px;color:#c9a227">В атаку</div></div>
+ <div><div class="t">Строй</div><div class="v" id="bForm" style="font-size:15px;color:#6f9450">Линия</div></div></div>
+<div id="bmsg"><div class="m1"></div><div class="m2"></div></div>
+
+<div class="ov hide" id="ovDialog"><div class="modal"><h2 id="dgT">—</h2><div class="sub" id="dgS"></div><div id="dgBody"></div><button class="btn" id="dgClose">Уйти</button></div></div>
+<div class="ov hide" id="ovParty"><div class="modal"><h2>Ваш отряд</h2><div class="sub" id="ptS"></div><div id="ptBody"></div><button class="btn" id="ptClose">Закрыть</button></div></div>
+<div class="ov hide" id="ovRealm"><div class="modal wide"><h2>Владения и держава</h2><div class="sub">Стройте, развивайте и основывайте новые поселения</div><div id="rlBody"></div><button class="btn" id="rlClose">Закрыть</button></div></div>
+<div class="ov hide" id="ovMap"><div class="modal wide"><h2>Карта земель</h2><div class="sub">Кликните по земле, чтобы идти. Кликните поселение или войско для дела</div>
+ <div id="mapOv"><div id="mapBox"><canvas id="mapC"></canvas></div><div id="mapSide"></div></div>
+ <button class="btn" id="mpClose">Вернуться (M)</button></div></div>
+<div class="ov hide" id="ovHelp"><div class="modal"><h2>Наука лорду</h2>
+ <div class="card"><div class="ct">🚶 Вы — в мире</div><div class="cd">Ходите пешком по своим и чужим поселениям, говорите с людьми, набирайте войско. Ворота ведут на карту земель.</div></div>
+ <div class="card"><div class="ct">🗺️ Карта земель</div><div class="cd">Время идёт. Лорды водят войска, разбойники грабят, деревни богатеют. Кликните по земле — идёте туда. Столкновение с врагом — сеча.</div></div>
+ <div class="card"><div class="ct">⚔️ Сеча</div><div class="cd">Вы бьётесь лично, ваш отряд — рядом. <b>1</b> — в атаку, <b>2</b> — держать строй, <b>3</b> — наступать, <b>4</b> — за мной, <b>5</b> — отступать. <b>F</b> — сменить строй (линия, щитовая стена, рассыпь, каре, клин). Конница бьёт с разгона, лучники держат дистанцию. Победа даёт добычу, пленных и славу.</div></div>
+ <div class="card"><div class="ct">🏰 Стройка</div><div class="cd">В своих поселениях у управляющего возводите промыслы, стены, башни и донжон. Деревню можно поднять до города, город — до замка. На пустых местах основывайте новые деревни.</div></div>
+ <div class="card"><div class="ct">👥 Войско</div><div class="cd">Крестьян учат до ополченцев, тех — до копейщиков, лучников, сержантов и рыцарей. Жалованье списывается ежедневно, провизия кормит отряд.</div></div>
+ <button class="btn gold" id="hpClose">В путь</button></div></div>
+
+</body></html>
