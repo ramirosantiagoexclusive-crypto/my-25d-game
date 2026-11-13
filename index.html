@@ -1,136 +1,125 @@
 <!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Вороний Камень — хроника лорда</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%232a2118'/><path d='M16 5l9 5v8c0 6-4 9-9 11-5-2-9-5-9-11v-8z' fill='%23c9a227'/></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23241c14'/><path d='M16 4l10 6v9c0 7-5 10-10 12-5-2-10-5-10-12v-9z' fill='%23c9a227'/></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Alegreya:wght@500;700;900&family=PT+Sans:wght@400;700&display=swap" rel="stylesheet">
 <style>
-:root{--ink:#241c14;--ink2:#3a2e21;--parch:#e9dcbe;--parch2:#dccfae;--wood:#7a5230;--forest:#33502f;--iron:#6d7480;--blood:#a8382a;--gold:#c9a227;--moss:#6f9450;--sky:#7fa8c9;--dim:#8a7a5e}
+:root{--ink:#241c14;--parch:#e9dcbe;--parch2:#d8c9a4;--wood:#7a5230;--forest:#33502f;--iron:#6d7480;--blood:#a8382a;--gold:#c9a227;--moss:#6f9450;--sky:#7fa8c9;--dim:#8a7a5e}
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{height:100%;overflow:hidden;background:#17120c;font-family:'PT Sans',sans-serif;color:var(--parch)}
+html,body{height:100%;overflow:hidden;background:#12100b;font-family:'PT Sans',sans-serif;color:var(--parch);user-select:none}
 ::-webkit-scrollbar{width:11px;height:11px}::-webkit-scrollbar-track{background:#241c14}::-webkit-scrollbar-thumb{background:var(--wood);border:2px solid #241c14;border-radius:6px}::-webkit-scrollbar-thumb:hover{background:var(--gold)}
 *{scrollbar-width:thin;scrollbar-color:var(--wood) #241c14}
 button,select,input{font-family:'PT Sans',sans-serif}
-#app{display:grid;grid-template-rows:auto 1fr auto;height:100vh;background:
- radial-gradient(circle at 15% 10%,rgba(122,82,48,.25),transparent 45%),radial-gradient(circle at 85% 85%,rgba(51,80,47,.25),transparent 45%),#17120c}
-header{display:flex;align-items:center;gap:14px;padding:9px 16px;background:linear-gradient(180deg,#2f2418,#241c14);border-bottom:2px solid var(--wood);flex-wrap:wrap}
-.crest{width:34px;height:38px;flex:none;background:var(--gold);clip-path:polygon(50% 0,100% 18%,100% 68%,50% 100%,0 68%,0 18%);display:flex;align-items:center;justify-content:center;font-size:18px;color:#241c14}
-h1{font-family:'Alegreya',serif;font-weight:900;font-size:19px;color:var(--parch);letter-spacing:.4px;line-height:1}
-.sub{font-size:11px;color:var(--dim)}
-.stat{display:flex;align-items:center;gap:6px;background:#1d160f;border:1px solid #4a3a26;border-radius:8px;padding:5px 11px;font-size:13px;font-weight:700}
-.stat b{color:var(--gold)}.stat.pop b{color:var(--moss)}.stat.mil b{color:var(--sky)}
-.spacer{flex:1}
-.speed{display:flex;gap:3px;background:#1d160f;border:1px solid #4a3a26;border-radius:8px;padding:3px}
-.speed button{background:none;border:none;color:var(--dim);padding:4px 9px;border-radius:6px;cursor:pointer;font-weight:700;font-size:12px}
-.speed button.on{background:var(--wood);color:var(--parch)}
-.ib{width:34px;height:34px;border-radius:8px;border:1px solid #4a3a26;background:#1d160f;color:var(--parch);cursor:pointer;font-size:15px}
-.ib:hover{border-color:var(--gold)}
-main{display:grid;grid-template-columns:1fr 372px;gap:12px;padding:12px;overflow:hidden}
-#mapWrap{position:relative;border:3px solid var(--wood);border-radius:12px;overflow:hidden;background:#c9b894;box-shadow:inset 0 0 60px rgba(60,40,20,.5)}
-#map{display:block;width:100%;height:100%;cursor:pointer}
-#mapTip{position:absolute;pointer-events:none;background:rgba(36,28,20,.95);border:1px solid var(--gold);border-radius:8px;padding:7px 11px;font-size:12px;opacity:0;transition:.12s;max-width:230px;line-height:1.45}
-aside{display:flex;flex-direction:column;gap:10px;overflow-y:auto;padding-right:4px}
-.card{background:linear-gradient(170deg,var(--parch),var(--parch2));color:var(--ink);border:2px solid var(--wood);border-radius:11px;padding:13px 15px;box-shadow:0 6px 18px rgba(0,0,0,.4)}
-.card h2{font-family:'Alegreya',serif;font-size:19px;font-weight:900;margin-bottom:2px}
-.card .lord{font-size:12px;color:#6b5636;margin-bottom:9px;font-style:italic}
-.row{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:3px 0;border-bottom:1px dotted #b6a681}
-.row:last-child{border:none}.row b{font-weight:700}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin:8px 0}
-.res{display:flex;align-items:center;gap:6px;background:rgba(122,82,48,.13);border-radius:7px;padding:5px 8px;font-size:12.5px;font-weight:700}
-.blds{display:flex;flex-wrap:wrap;gap:4px;margin:7px 0}
-.bld{background:rgba(51,80,47,.16);border:1px solid rgba(51,80,47,.35);border-radius:6px;padding:3px 7px;font-size:11.5px;font-weight:700}
-.bar{height:7px;background:#c2b28e;border-radius:4px;overflow:hidden;margin-top:3px}
-.bar>i{display:block;height:100%}
-.lbl{font-size:10.5px;text-transform:uppercase;letter-spacing:1.2px;color:#6b5636;font-weight:700;margin:9px 0 4px}
-.btn{width:100%;background:linear-gradient(180deg,var(--wood),#5e3d22);color:var(--parch);border:1px solid #4a3018;border-radius:8px;padding:9px;font-weight:700;font-size:13px;cursor:pointer;margin-top:6px;font-family:'Alegreya',serif;letter-spacing:.3px}
-.btn:hover{filter:brightness(1.15)}.btn:disabled{opacity:.42;cursor:not-allowed;filter:none}
-.btn.gold{background:linear-gradient(180deg,var(--gold),#9c7a15);color:#241c14;border-color:#7a5f0f}
-.btn.red{background:linear-gradient(180deg,var(--blood),#7d2519);border-color:#5e1c12}
-.btn.sm{padding:6px;font-size:12px;margin-top:4px}
-.seg{display:flex;gap:3px;margin-top:5px}
-.seg button{flex:1;background:rgba(122,82,48,.16);border:1px solid #b6a681;color:#5a4830;border-radius:6px;padding:5px 3px;font-size:11px;font-weight:700;cursor:pointer}
-.seg button.on{background:var(--forest);color:var(--parch);border-color:var(--forest)}
-input[type=range]{width:100%;accent-color:var(--wood);margin-top:5px}
-footer{background:#1d160f;border-top:2px solid var(--wood);padding:7px 14px;max-height:118px;overflow-y:auto}
-footer .lbl{color:var(--dim);margin:0 0 4px}
-.le{font-size:12.5px;padding:2px 0;line-height:1.45;border-bottom:1px solid #2b2318}
-.le span{color:var(--dim);font-size:11px;margin-right:6px}
-#alerts{position:fixed;left:50%;top:64px;transform:translateX(-50%);z-index:40;display:flex;flex-direction:column;gap:8px;align-items:center}
-.alert{background:linear-gradient(170deg,#3a1c14,#2a140e);border:2px solid var(--blood);border-radius:11px;padding:11px 18px;text-align:center;box-shadow:0 8px 28px rgba(0,0,0,.6);animation:pop .3s}
-.alert .at{font-family:'Alegreya',serif;font-weight:900;font-size:16px;color:#ffb9a8}
-.alert .as{font-size:12px;color:var(--parch);margin:3px 0 7px}
-@keyframes pop{from{transform:scale(.9);opacity:0}to{transform:none;opacity:1}}
-.ov{position:fixed;inset:0;z-index:50;background:rgba(12,9,6,.86);display:flex;align-items:center;justify-content:center;padding:18px;backdrop-filter:blur(3px)}
+#view{position:fixed;inset:0;display:block}
+#hud{position:fixed;top:0;left:0;right:0;display:flex;gap:9px;align-items:flex-start;padding:10px 13px;pointer-events:none;z-index:20;flex-wrap:wrap}
+.grp{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.chip{display:flex;align-items:center;gap:7px;background:rgba(24,18,12,.86);border:1px solid #4a3a26;border-radius:9px;padding:6px 11px;font-size:13px;font-weight:700;backdrop-filter:blur(5px)}
+.chip b{color:var(--gold)}.chip.pop b{color:var(--moss)}.chip.mil b{color:var(--sky)}
+#hpwrap{min-width:190px}
+.bar{height:9px;background:#2a2118;border:1px solid #4a3a26;border-radius:5px;overflow:hidden;margin-top:4px}
+.bar>i{display:block;height:100%;transition:width .15s}
+#hpF{background:linear-gradient(90deg,#a8382a,#c9a227)}
+#morF{background:linear-gradient(90deg,#6f9450,#8fc46a)}
+.sp{flex:1}
+.ib{pointer-events:auto;width:36px;height:36px;border-radius:9px;border:1px solid #4a3a26;background:rgba(24,18,12,.86);color:var(--parch);cursor:pointer;font-size:16px}
+.ib:hover{border-color:var(--gold);background:#2f2418}
+.ib.on{border-color:var(--gold);color:var(--gold)}
+#place{position:fixed;top:60px;left:13px;z-index:19;background:rgba(24,18,12,.8);border-left:3px solid var(--gold);border-radius:0 9px 9px 0;padding:7px 14px}
+#place .n{font-family:'Alegreya',serif;font-weight:900;font-size:17px}
+#place .s{font-size:11.5px;color:var(--dim)}
+#prompt{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(8px);z-index:22;background:rgba(24,18,12,.93);border:1px solid var(--gold);border-radius:10px;padding:9px 18px;font-size:14px;opacity:0;transition:.16s;display:flex;gap:9px;align-items:center;pointer-events:none}
+#prompt.on{opacity:1;transform:translateX(-50%)}
+kbd{background:#2f2418;border:1px solid #5e4a2e;border-bottom-width:2px;border-radius:5px;padding:1px 7px;font-size:12px;font-weight:700;color:var(--gold)}
+#hint{position:fixed;left:13px;bottom:12px;z-index:19;background:rgba(24,18,12,.75);border:1px solid #3a2e21;border-radius:9px;padding:6px 12px;font-size:12px;color:var(--dim)}
+#feed{position:fixed;right:13px;bottom:12px;z-index:21;display:flex;flex-direction:column;gap:5px;align-items:flex-end;pointer-events:none;max-width:330px}
+.fe{background:rgba(24,18,12,.9);border:1px solid #4a3a26;border-left:3px solid var(--gold);border-radius:7px;padding:5px 11px;font-size:12.5px;animation:fin .25s,fout .4s 3.1s forwards}
+@keyframes fin{from{transform:translateX(22px);opacity:0}}@keyframes fout{to{transform:translateX(22px);opacity:0}}
+#toast{position:fixed;left:50%;top:74px;transform:translateX(-50%) translateY(-8px);z-index:30;background:rgba(24,18,12,.95);border:1px solid var(--gold);border-radius:10px;padding:9px 20px;font-size:14px;opacity:0;transition:.22s;pointer-events:none;text-align:center;max-width:80vw}
+#toast.on{opacity:1;transform:translateX(-50%)}
+#bHud{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:22;display:none;gap:16px;background:rgba(24,18,12,.88);border:1px solid var(--wood);border-radius:11px;padding:9px 20px;font-family:'Alegreya',serif}
+#bHud.on{display:flex}
+#bHud .t{font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--dim)}
+#bHud .v{font-size:21px;font-weight:900}
+.ov{position:fixed;inset:0;z-index:40;background:rgba(12,9,6,.8);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:16px}
 .ov.hide{display:none}
-.modal{width:min(560px,95vw);max-height:90vh;overflow:auto;background:linear-gradient(170deg,var(--parch),var(--parch2));color:var(--ink);border:3px solid var(--wood);border-radius:14px;padding:24px 26px}
-.modal h2{font-family:'Alegreya',serif;font-size:25px;font-weight:900;text-align:center;margin-bottom:4px}
-.modal p{font-size:13.5px;line-height:1.55;color:#4a3a26;text-align:center;margin-bottom:12px}
-.pick{display:flex;flex-direction:column;gap:5px;margin:10px 0;max-height:210px;overflow:auto}
-.pick button{display:flex;justify-content:space-between;align-items:center;background:rgba(122,82,48,.12);border:1px solid #b6a681;border-radius:8px;padding:8px 12px;cursor:pointer;font-size:13px;color:var(--ink);text-align:left}
-.pick button.on{background:var(--forest);color:var(--parch);border-color:var(--forest)}
-#battle{position:fixed;inset:0;z-index:60;display:none;background:#0d0a07}
-#battle.on{display:block}
-#bcanvas{display:block;width:100%;height:100%}
-#bhud{position:absolute;left:0;right:0;top:0;display:flex;justify-content:space-between;padding:12px 16px;pointer-events:none;font-family:'Alegreya',serif}
-.bside{background:rgba(20,15,10,.8);border:2px solid var(--wood);border-radius:10px;padding:8px 14px;min-width:170px}
-.bside .t{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim)}
-.bside .v{font-size:21px;font-weight:900}
-#bmsg{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);text-align:center;font-family:'Alegreya',serif;opacity:0;transition:.4s;pointer-events:none}
-#bmsg.on{opacity:1}#bmsg .m1{font-size:44px;font-weight:900;text-shadow:0 4px 20px #000}#bmsg .m2{font-size:15px;color:var(--parch)}
-#bhelp{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);background:rgba(20,15,10,.8);border:1px solid var(--wood);border-radius:9px;padding:7px 15px;font-size:12.5px;color:var(--dim)}
-#bhp{position:absolute;left:16px;bottom:16px;width:230px}
-#bhp .bar{height:12px;background:#2a2118;border:1px solid var(--wood)}
-@media(max-width:980px){main{grid-template-columns:1fr;grid-template-rows:280px 1fr}aside{max-height:none}}
+.modal{width:min(680px,96vw);max-height:92vh;overflow:auto;background:linear-gradient(170deg,var(--parch),var(--parch2));color:var(--ink);border:3px solid var(--wood);border-radius:14px;padding:22px 24px;box-shadow:0 22px 60px rgba(0,0,0,.6)}
+.modal.wide{width:min(1080px,97vw)}
+.modal h2{font-family:'Alegreya',serif;font-size:25px;font-weight:900;text-align:center}
+.modal .sub{font-size:12.5px;color:#6b5636;text-align:center;font-style:italic;margin-bottom:12px}
+.lbl{font-size:10.5px;text-transform:uppercase;letter-spacing:1.3px;color:#6b5636;font-weight:700;margin:12px 0 5px}
+.btn{width:100%;background:linear-gradient(180deg,var(--wood),#5b3c21);color:var(--parch);border:1px solid #432c15;border-radius:8px;padding:10px;font-weight:700;font-size:13.5px;cursor:pointer;margin-top:7px;font-family:'Alegreya',serif;letter-spacing:.3px}
+.btn:hover{filter:brightness(1.16)}.btn:disabled{opacity:.4;cursor:not-allowed;filter:none}
+.btn.gold{background:linear-gradient(180deg,var(--gold),#9a7813);color:#241c14;border-color:#785d0d}
+.btn.red{background:linear-gradient(180deg,var(--blood),#7a2317);border-color:#5c1a11}
+.btn.sm{padding:6px;font-size:12px;margin-top:4px;width:auto;padding-left:12px;padding-right:12px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13px;padding:5px 0;border-bottom:1px dotted #b6a681}
+.row:last-child{border:none}.row b{font-weight:700}
+.card{background:rgba(122,82,48,.1);border:1px solid #b6a681;border-radius:9px;padding:10px 12px;margin-bottom:7px}
+.card .ct{font-family:'Alegreya',serif;font-weight:700;font-size:15px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.card .cd{font-size:11.5px;color:#5a4830;margin-top:3px;line-height:1.45}
+.card .cb{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+.tag{background:rgba(51,80,47,.16);border:1px solid rgba(51,80,47,.35);border-radius:5px;padding:2px 7px;font-size:11px;font-weight:700}
+.tag.no{background:rgba(168,56,42,.14);border-color:rgba(168,56,42,.4);color:#8a2a1e}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+#mapOv{display:grid;grid-template-columns:1fr 340px;gap:12px}
+#mapBox{position:relative;border:3px solid var(--wood);border-radius:11px;overflow:hidden;background:#c9b894;height:min(70vh,620px)}
+#mapC{display:block;width:100%;height:100%;cursor:crosshair}
+#mapSide{max-height:min(70vh,620px);overflow:auto;padding-right:4px}
+.speed{display:flex;gap:3px;background:rgba(122,82,48,.14);border:1px solid #b6a681;border-radius:8px;padding:3px;margin-bottom:8px}
+.speed button{flex:1;background:none;border:none;color:#5a4830;padding:5px;border-radius:5px;cursor:pointer;font-weight:700;font-size:12px}
+.speed button.on{background:var(--wood);color:var(--parch)}
+#log{max-height:150px;overflow:auto;font-size:12px;line-height:1.5}
+#log div{padding:2px 0;border-bottom:1px dotted #b6a681}
+#log span{color:#7a6444;font-size:10.5px;margin-right:5px}
+#bmsg{position:fixed;left:50%;top:42%;transform:translate(-50%,-50%);z-index:35;text-align:center;font-family:'Alegreya',serif;opacity:0;transition:.4s;pointer-events:none}
+#bmsg.on{opacity:1}#bmsg .m1{font-size:46px;font-weight:900;text-shadow:0 4px 22px #000}#bmsg .m2{font-size:15px}
+@media(max-width:900px){#mapOv{grid-template-columns:1fr;grid-template-rows:300px 1fr}#mapBox{height:300px}}
 </style></head><body>
-<div id="app">
-<header>
- <div class="crest">🦅</div>
- <div><h1>Вороний Камень</h1><div class="sub" id="date">—</div></div>
- <div class="stat">🪙 <b id="hCoin">0</b></div>
- <div class="stat pop">👥 <b id="hPop">0</b></div>
- <div class="stat mil">⚔️ <b id="hMil">0</b></div>
- <div class="stat">🏰 <b id="hLand">0</b>/7</div>
- <div class="spacer"></div>
- <div class="speed" id="speed"><button data-s="0">❚❚</button><button data-s="1" class="on">▶</button><button data-s="2">▶▶</button><button data-s="4">▶▶▶</button></div>
- <button class="ib" id="snd" title="Звук">🔊</button>
- <button class="ib" id="help" title="Совет">📜</button>
-</header>
-<main>
- <div id="mapWrap"><canvas id="map"></canvas><div id="mapTip"></div></div>
- <aside id="side"></aside>
-</main>
-<footer><div class="lbl">Хроника</div><div id="log"></div></footer>
+<canvas id="view"></canvas>
+<div id="hud">
+ <div class="grp">
+  <div class="chip" id="hpwrap"><div style="flex:1"><div style="display:flex;justify-content:space-between"><span>❤️ Здоровье</span><b id="hpT">100</b></div><div class="bar"><i id="hpF"></i></div></div></div>
+  <div class="chip" style="min-width:150px"><div style="flex:1"><div style="display:flex;justify-content:space-between"><span>🎖️ Дух</span><b id="morT">70</b></div><div class="bar"><i id="morF"></i></div></div></div>
+ </div>
+ <div class="grp">
+  <div class="chip">🪙 <b id="hGold">0</b></div>
+  <div class="chip pop">👥 <b id="hParty">0</b></div>
+  <div class="chip">🌾 <b id="hFood">0</b></div>
+  <div class="chip mil">🏵️ <b id="hRen">0</b></div>
+  <div class="chip">📅 <b id="hDay">1</b></div>
+ </div>
+ <div class="sp"></div>
+ <div class="grp">
+  <button class="ib" id="bMap" title="Карта мира (M)">🗺️</button>
+  <button class="ib" id="bParty" title="Отряд (P)">⚔️</button>
+  <button class="ib" id="bRealm" title="Владения (R)">🏰</button>
+  <button class="ib" id="bSnd" title="Звук">🔊</button>
+  <button class="ib" id="bHelp" title="Наука (H)">📜</button>
+ </div>
 </div>
-<div id="alerts"></div>
-<div class="ov hide" id="ovCampaign"><div class="modal">
- <h2>Военный совет</h2><p id="cSub">Выберите цель похода</p>
- <div class="lbl">Откуда выступаем</div><select id="cFrom" style="width:100%;padding:8px;border-radius:8px;border:1px solid #b6a681;background:#f2e8d2;color:#241c14"></select>
- <div class="lbl">Цель</div><div class="pick" id="cTargets"></div>
- <div class="lbl">Ополчение: <b id="cMilN">0</b> · Ратники: <b id="cGarN">0</b></div>
- <input type="range" id="cMil" min="0" max="0" value="0"><input type="range" id="cGar" min="0" max="0" value="0">
- <div class="seg" id="cType"><button data-r="0" class="on">⚔️ Захват</button><button data-r="1">🔥 Набег</button></div>
- <button class="btn gold" id="cLead">Возглавить лично</button>
- <button class="btn" id="cAuto">Доверить воеводе (авторасчёт)</button>
- <button class="btn sm" id="cCancel">Отмена</button>
-</div></div>
-<div class="ov hide" id="ovBattleAsk"><div class="modal">
- <h2 id="baT">Битва</h2><p id="baP"></p>
- <button class="btn gold" id="baLead">Возглавить лично</button>
- <button class="btn" id="baAuto">Доверить командирам</button>
-</div></div>
-<div class="ov hide" id="ovHelp"><div class="modal">
- <h2>Совет лорду</h2>
- <p>Ваши подданные живут сами: пашут, рубят лес, добывают камень и железо, ткут сукно, ставят дворы и растут числом. Стройки идут сами — вы лишь задаёте <b>уклад</b> сектора и <b>подать</b>.</p>
- <p><b>Ополчение</b> созывается из жителей — пока оно под ружьём, поля и промыслы стоят. <b>Ратники</b> — постоянная дружина за монету. Частокол и казармы решают исход обороны.</p>
- <p>Соседи делают то же самое: копят силу и ходят в набеги и походы. Перехватывайте войско на карте или встречайте его у стен — <b>личное участие</b> в сече переламывает исход.</p>
- <p>В бою: <b>WASD</b> — движение, <b>ЛКМ</b> — удар, <b>Q</b> — кувырок, <b>Shift</b> — бег. Победа в сече даёт войску перевес.</p>
- <button class="btn" id="helpClose">Понятно</button>
-</div></div>
-<div id="battle"><canvas id="bcanvas"></canvas>
- <div id="bhud"><div class="bside"><div class="t">Наши</div><div class="v" id="bAlly" style="color:#8fc46a">0</div></div>
- <div class="bside" style="text-align:right"><div class="t">Неприятель</div><div class="v" id="bEnemy" style="color:#e07a68">0</div></div></div>
- <div id="bhp"><div class="t" style="font-size:11px;color:#8a7a5e">Здоровье лорда</div><div class="bar"><i id="bhpF" style="background:linear-gradient(90deg,#a8382a,#c9a227);width:100%"></i></div></div>
- <div id="bmsg"><div class="m1"></div><div class="m2"></div></div>
- <div id="bhelp">WASD — движение · ЛКМ — удар · Q — кувырок · Shift — бег</div>
-</div>
+<div id="place"><div class="n">—</div><div class="s">—</div></div>
+<div id="prompt"><kbd>E</kbd><span id="promptT"></span></div>
+<div id="hint"><b>WASD</b> ходьба · <b>мышь</b> прицел · <b>ЛКМ</b> удар · <b>Q</b> кувырок · <b>Shift</b> бег · <b>E</b> действие · <b>M</b> карта</div>
+<div id="feed"></div><div id="toast"></div>
+<div id="bHud"><div><div class="t">Наши</div><div class="v" id="bAl" style="color:#8fc46a">0</div></div>
+ <div><div class="t">Неприятель</div><div class="v" id="bEn" style="color:#e07a68">0</div></div>
+ <div><div class="t">Приказ</div><div class="v" id="bOrd" style="font-size:15px;color:#c9a227">В атаку</div></div></div>
+<div id="bmsg"><div class="m1"></div><div class="m2"></div></div>
+
+<div class="ov hide" id="ovDialog"><div class="modal"><h2 id="dgT">—</h2><div class="sub" id="dgS"></div><div id="dgBody"></div><button class="btn" id="dgClose">Уйти</button></div></div>
+<div class="ov hide" id="ovParty"><div class="modal"><h2>Ваш отряд</h2><div class="sub" id="ptS"></div><div id="ptBody"></div><button class="btn" id="ptClose">Закрыть</button></div></div>
+<div class="ov hide" id="ovRealm"><div class="modal wide"><h2>Владения и держава</h2><div class="sub">Стройте, развивайте и основывайте новые поселения</div><div id="rlBody"></div><button class="btn" id="rlClose">Закрыть</button></div></div>
+<div class="ov hide" id="ovMap"><div class="modal wide"><h2>Карта земель</h2><div class="sub">Кликните по земле, чтобы идти. Кликните поселение или войско для дела</div>
+ <div id="mapOv"><div id="mapBox"><canvas id="mapC"></canvas></div><div id="mapSide"></div></div>
+ <button class="btn" id="mpClose">Вернуться (M)</button></div></div>
+<div class="ov hide" id="ovHelp"><div class="modal"><h2>Наука лорду</h2>
+ <div class="card"><div class="ct">🚶 Вы — в мире</div><div class="cd">Ходите пешком по своим и чужим поселениям, говорите с людьми, набирайте войско. Ворота ведут на карту земель.</div></div>
+ <div class="card"><div class="ct">🗺️ Карта земель</div><div class="cd">Время идёт. Лорды водят войска, разбойники грабят, деревни богатеют. Кликните по земле — идёте туда. Столкновение с врагом — сеча.</div></div>
+ <div class="card"><div class="ct">⚔️ Сеча</div><div class="cd">Вы бьётесь лично, ваш отряд — рядом. <b>1</b> — в атаку, <b>2</b> — держать строй, <b>3</b> — отступать. Победа даёт добычу, пленных и славу.</div></div>
+ <div class="card"><div class="ct">🏰 Стройка</div><div class="cd">В своих поселениях у управляющего возводите промыслы, стены, башни и донжон. Деревню можно поднять до города, город — до замка. На пустых местах основывайте новые деревни.</div></div>
+ <div class="card"><div class="ct">👥 Войско</div><div class="cd">Крестьян учат до ополченцев, тех — до копейщиков, лучников, сержантов и рыцарей. Жалованье списывается ежедневно, провизия кормит отряд.</div></div>
+ <button class="btn gold" id="hpClose">В путь</button></div></div>
+
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
 <script type="module" src="js/game.js"></script>
 </body></html>
