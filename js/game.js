@@ -4,13 +4,13 @@ import * as SC from './scene.js';
 const $=i=>document.getElementById(i),cl=(v,a,b)=>Math.max(a,Math.min(b,v));
 let S=SIM.create(),view='scene',curSettle='keep',mapSel=null,battleArmy=null,acc=0,last=performance.now(),muted=false,AC=null,paused=false;
 let mapPan={x:0,y:0},mapZoom=1,mapDrag=false,mapDragStart=null;
-function sfx(k){if(muted)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)());
+function sfx(k){if(muted)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();
  const t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain();o.connect(g);g.connect(AC.destination);
  const P={hit:[220,90,.09,'square',.14],swing:[520,240,.07,'sine',.07],hurt:[180,60,.2,'sawtooth',.16],
   kill:[300,110,.14,'square',.12],dodge:[700,300,.1,'sine',.08],coin:[880,1300,.08,'sine',.12],
   build:[200,420,.2,'square',.12],horn:[150,320,.45,'sawtooth',.16],ui:[600,700,.05,'sine',.07]}[k]||[440,440,.06,'sine',.08];
  o.type=P[3];o.frequency.setValueAtTime(P[0],t);o.frequency.exponentialRampToValueAtTime(P[1],t+P[2]);
- g.gain.setValueAtTime(P[4],t);g.gain.exponentialRampToValueAtTime(.001,t+P[2]);o.start(t);o.stop(t+P[2]+.02);}catch(e){}}
+ g.gain.setValueAtTime(P[4],t);g.gain.exponentialRampToValueAtTime(.001,t+P[2]);o.start(t);o.stop(t+P[2]+.02);}catch(e){void 0;}}
 function toast(m){const e=$('toast');e.textContent=m;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),2400);}
 function feed(m,c){const f=$('feed'),d=document.createElement('div');d.className='fe';d.style.borderLeftColor=c||'#c9a227';d.innerHTML=m;
  f.appendChild(d);while(f.children.length>5)f.removeChild(f.firstChild);setTimeout(()=>d.remove(),3600);}
