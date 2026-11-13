@@ -33,7 +33,7 @@ function enterSettlement(id){curSettle=id;view='scene';const s=S.settlements[id]
  $('place').querySelector('.s').textContent=`${KIND[s.kind].n} · ${LORDS[s.lord]?.n||'—'} · люд ${Math.round(s.pop)} · гарнизон ${s.gar}`;
  $('bHud').classList.remove('on');closeAll();toast(`Вы вошли в ${s.n}`);}
 function exitToMap(){view='map';$('ovMap').classList.remove('hide');mapSel=curSettle;drawMap();renderMapSide();sfx('ui');}
-function closeAll(){['ovDialog','ovParty','ovRealm','ovMap','ovHelp','ovSave'].forEach(i=>$(i).classList.add('hide'));}
+function closeAll(){['ovDialog','ovParty','ovRealm','ovMap','ovHelp'].forEach(i=>$(i).classList.add('hide'));}
 function doInteract(){
  if(view!=='scene'||battleArmy)return;
  const it=SC.nearestInteract();if(!it)return;const s=S.settlements[curSettle];

@@ -93,17 +93,19 @@ kbd{background:#2f2418;border:1px solid #5e4a2e;border-bottom-width:2px;border-r
   <button class="ib" id="bMap" title="Карта мира (M)">🗺️</button>
   <button class="ib" id="bParty" title="Отряд (P)">⚔️</button>
   <button class="ib" id="bRealm" title="Владения (R)">🏰</button>
+  <button class="ib" id="bSave" title="Сохранить (F5)">💾</button>
   <button class="ib" id="bSnd" title="Звук">🔊</button>
   <button class="ib" id="bHelp" title="Наука (H)">📜</button>
  </div>
 </div>
 <div id="place"><div class="n">—</div><div class="s">—</div></div>
 <div id="prompt"><kbd>E</kbd><span id="promptT"></span></div>
-<div id="hint"><b>WASD</b> ходьба · <b>мышь</b> прицел · <b>ЛКМ</b> удар · <b>Q</b> кувырок · <b>Shift</b> бег · <b>E</b> действие · <b>M</b> карта</div>
+<div id="hint"><b>WASD</b> ходьба · <b>мышь</b> прицел · <b>ЛКМ</b> удар · <b>Q</b> кувырок · <b>Shift</b> бег · <b>E</b> действие · <b>M</b> карта · <b>F5</b> сохранить</div>
 <div id="feed"></div><div id="toast"></div>
 <div id="bHud"><div><div class="t">Наши</div><div class="v" id="bAl" style="color:#8fc46a">0</div></div>
  <div><div class="t">Неприятель</div><div class="v" id="bEn" style="color:#e07a68">0</div></div>
- <div><div class="t">Приказ</div><div class="v" id="bOrd" style="font-size:15px;color:#c9a227">В атаку</div></div></div>
+ <div><div class="t">Приказ</div><div class="v" id="bOrd" style="font-size:15px;color:#c9a227">В атаку</div></div>
+ <div><div class="t">Строй</div><div class="v" id="bForm" style="font-size:15px;color:#6f9450">Линия</div></div></div>
 <div id="bmsg"><div class="m1"></div><div class="m2"></div></div>
 
 <div class="ov hide" id="ovDialog"><div class="modal"><h2 id="dgT">—</h2><div class="sub" id="dgS"></div><div id="dgBody"></div><button class="btn" id="dgClose">Уйти</button></div></div>
@@ -115,11 +117,11 @@ kbd{background:#2f2418;border:1px solid #5e4a2e;border-bottom-width:2px;border-r
 <div class="ov hide" id="ovHelp"><div class="modal"><h2>Наука лорду</h2>
  <div class="card"><div class="ct">🚶 Вы — в мире</div><div class="cd">Ходите пешком по своим и чужим поселениям, говорите с людьми, набирайте войско. Ворота ведут на карту земель.</div></div>
  <div class="card"><div class="ct">🗺️ Карта земель</div><div class="cd">Время идёт. Лорды водят войска, разбойники грабят, деревни богатеют. Кликните по земле — идёте туда. Столкновение с врагом — сеча.</div></div>
- <div class="card"><div class="ct">⚔️ Сеча</div><div class="cd">Вы бьётесь лично, ваш отряд — рядом. <b>1</b> — в атаку, <b>2</b> — держать строй, <b>3</b> — отступать. Победа даёт добычу, пленных и славу.</div></div>
+ <div class="card"><div class="ct">⚔️ Сеча</div><div class="cd">Вы бьётесь лично, ваш отряд — рядом. <b>1</b> — в атаку, <b>2</b> — держать строй, <b>3</b> — наступать, <b>4</b> — за мной, <b>5</b> — отступать. <b>F</b> — сменить строй (линия, щитовая стена, рассыпь, каре, клин). Конница бьёт с разгона, лучники держат дистанцию. Победа даёт добычу, пленных и славу.</div></div>
  <div class="card"><div class="ct">🏰 Стройка</div><div class="cd">В своих поселениях у управляющего возводите промыслы, стены, башни и донжон. Деревню можно поднять до города, город — до замка. На пустых местах основывайте новые деревни.</div></div>
  <div class="card"><div class="ct">👥 Войско</div><div class="cd">Крестьян учат до ополченцев, тех — до копейщиков, лучников, сержантов и рыцарей. Жалованье списывается ежедневно, провизия кормит отряд.</div></div>
  <button class="btn gold" id="hpClose">В путь</button></div></div>
 
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
-<script type="module" src="js/game.js"></script>
+<script type="module" src="/js/game.js"></script>
 </body></html>
