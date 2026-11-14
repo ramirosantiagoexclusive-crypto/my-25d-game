@@ -4,7 +4,7 @@ const SAVE_KEY='voroniy_kamen_save',SAVE_VER=2;
 export const season=d=>SEASONS[Math.floor((d%120)/30)];
 export function create(){
  const S={day:1,speed:1,mode:'scene',settlements:{},sites:SITES.map(s=>({...s})),armies:[],log:[],nid:1,
-  player:{x:.5,y:.52,tx:null,ty:null,gold:900,food:80,renown:12,honor:10,hp:100,maxHp:100,morale:80,
+  player:{x:.5,y:.52,tx:null,ty:null,gold:900,food:120,renown:12,honor:10,hp:100,maxHp:100,morale:80,
    troops:{levy:8,hunter:4,spearman:2},weapon:1,armor:1,xp:0,lvl:1,prisoners:0,days:0},
   wars:{},battle:null,result:null};
  SETTLEMENTS.forEach(d=>{S.settlements[d.id]={...d,b:{...d.b},stock:{grain:70,timber:40,stone:30,iron:12,cloth:8,tools:6,wine:4},
@@ -100,14 +100,24 @@ function siege(S,a,s){
 export function tick(S){
  S.day++;const P=S.player;
  for(const id in S.settlements)settleTick(S,S.settlements[id]);
+ // Check if player is in one of their own settlements (resting)
+ const inOwnTown=Object.values(S.settlements).some(s=>s.lord==='you'&&Math.hypot(s.x-P.x,s.y-P.y)<.05);
  const w=wage(S),need=Math.max(1,Math.ceil(partySize(S)*.5));
+ if(inOwnTown){
+  // Free upkeep while resting in own settlement
+  P.food=Math.min(120,P.food+need);
+  P.morale=cl(P.morale+2,0,100);
+  P.hp=Math.min(P.maxHp,P.hp+8);
+ }
+ else{
  P.gold-=w;
  if(P.food>=need){P.food-=need;P.morale=cl(P.morale+1.2,0,100);}
- else{P.food=0;P.morale=cl(P.morale-5,0,100);if(Math.random()<.3){const k=Object.keys(P.troops).find(x=>P.troops[x]>0);
+ else{P.food=0;P.morale=cl(P.morale-3,0,100);if(Math.random()<.15){const k=Object.keys(P.troops).find(x=>P.troops[x]>0);
   if(k){P.troops[k]--;log(S,`🌾 Голод: боец покинул отряд`,'#e07a68');}}}
- if(P.gold<0){P.gold=0;P.morale=cl(P.morale-4,0,100);
-  const k=Object.keys(P.troops).find(x=>P.troops[x]>0);if(k&&Math.random()<.4){P.troops[k]--;log(S,'💸 Жалованья нет — боец ушёл','#c98f2a');}}
- if(P.morale<25&&Math.random()<.2){const k=Object.keys(P.troops).find(x=>P.troops[x]>0);if(k){P.troops[k]--;log(S,'🏃 Дезертирство в отряде','#e07a68');}}
+ if(P.gold<0){P.gold=0;P.morale=cl(P.morale-3,0,100);
+  const k=Object.keys(P.troops).find(x=>P.troops[x]>0);if(k&&Math.random()<.25){P.troops[k]--;log(S,'💸 Жалованья нет — боец ушёл','#c98f2a');}}
+ if(P.morale<20&&Math.random()<.1){const k=Object.keys(P.troops).find(x=>P.troops[x]>0);if(k){P.troops[k]--;log(S,'🏃 Дезертирство в отряде','#e07a68');}}
+ }
  P.hp=Math.min(P.maxHp,P.hp+3);
  const own=Object.values(S.settlements).filter(s=>s.lord==='you');
  if(S.day%5===0){let g=0;own.forEach(s=>g+=s.income||0);if(g){P.gold+=g;log(S,`🪙 Подати с владений: +${g}`,'#c9a227');}}
@@ -130,7 +140,7 @@ export function tick(S){
  return null;}
 export function playerMove(S,dt){
  const P=S.player;if(P.tx==null)return null;
- const sp=.055*dt;if(moveToward(P,P.tx,P.ty,sp)){P.tx=null;P.ty=null;}
+ const sp=.04*dt;if(moveToward(P,P.tx,P.ty,sp)){P.tx=null;P.ty=null;}
  for(const a of S.armies){
   const hostile=a.kind==='bandit'||a.lord!=='you';
   if(hostile&&Math.hypot(a.x-P.x,a.y-P.y)<.032){return{type:'army',army:a};}}
@@ -185,6 +195,6 @@ function migrate(c){
 export function restore(c){const S={...c,mode:'scene',battle:null,result:null};
  if(!S.settlements)S.settlements={};if(!S.sites)S.sites=[];
  if(!S.armies)S.armies=[];if(!S.wars)S.wars={};if(!S.log)S.log=[];
- if(!S.player)S.player={x:.5,y:.52,gold:900,food:80,renown:12,honor:10,hp:100,maxHp:100,morale:80,troops:{levy:8,hunter:4,spearman:2},weapon:1,armor:1,prisoners:0};
+ if(!S.player)S.player={x:.5,y:.52,gold:900,food:120,renown:12,honor:10,hp:100,maxHp:100,morale:80,troops:{levy:8,hunter:4,spearman:2},weapon:1,armor:1,prisoners:0};
  S.player.tx=null;S.player.ty=null;
  return S;}

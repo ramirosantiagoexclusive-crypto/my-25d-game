@@ -31,7 +31,7 @@ function enterSettlement(id){curSettle=id;view='scene';const s=S.settlements[id]
  SC.loadSettlement(s,S.player.troops,null);
  $('place').querySelector('.n').textContent=s.n;
  $('place').querySelector('.s').textContent=`${KIND[s.kind].n} · ${LORDS[s.lord]?.n||'—'} · люд ${Math.round(s.pop)} · гарнизон ${s.gar}`;
- $('bHud').classList.remove('on');closeAll();toast(`Вы вошли в ${s.n}`);}
+ $('bHud').classList.remove('on');closeAll();toast(s.lord==='you'?`Вы вошли в ${s.n} — отряд на отдыхе`:`Вы вошли в ${s.n}`);}
 function exitToMap(){view='map';autoCenter=true;$('ovMap').classList.remove('hide');mapSel=curSettle;drawMap();renderMapSide();sfx('ui');}
 function closeAll(){['ovDialog','ovParty','ovRealm','ovMap','ovHelp'].forEach(i=>$(i).classList.add('hide'));}
 function doInteract(){
@@ -53,6 +53,7 @@ function openSteward(s){const mine=s.lord==='you';
  h+=`<div class="lbl">Запасы</div><div class="grid3">`;
  for(const g in GOODS)h+=`<div class="tag">${GOODS[g].i} ${GOODS[g].n}: ${Math.round(s.stock[g])}</div>`;h+=`</div>`;
  if(mine){const K=KIND[s.kind];
+  h+=`<button class="btn gold" id="restBtn">🏕️ Отдыхать 5 дней (бесплатное питание и лечение)</button>`;
   if(K.up)h+=`<button class="btn gold" id="upg">🏗️ Перестроить в ${KIND[K.up].n} — ${K.uc.gold}🪙 + материалы (${K.ud} дн.)</button>`;
   h+=`<div class="lbl">Возвести</div>`;
   for(const k in BUILD){const B=BUILD[k],err=SIM.canBuild(s,k),cost=Object.entries(B.c).map(([r,n])=>r==='gold'?n+'🪙':GOODS[r].i+n).join(' ');
@@ -62,7 +63,8 @@ function openSteward(s){const mine=s.lord==='you';
  dialog('Управляющий',s.n,h);
  $('dgBody').querySelectorAll('[data-b]').forEach(b=>b.onclick=()=>{const e=SIM.startBuild(S,s.id,b.dataset.b,S.player.gold);
   if(e)toast(e);else{S.player.gold-=BUILD[b.dataset.b].c.gold;sfx('build');feed('🔨 Заложено: '+BUILD[b.dataset.b].n);}openSteward(s);});
- const u=$('upg');if(u)u.onclick=()=>{const e=SIM.startUpgrade(S,s.id,S.player.gold);if(e)toast(e);else{S.player.gold-=KIND[s.kind].uc.gold;sfx('build');}openSteward(s);};}
+ const u=$('upg');if(u)u.onclick=()=>{const e=SIM.startUpgrade(S,s.id,S.player.gold);if(e)toast(e);else{S.player.gold-=KIND[s.kind].uc.gold;sfx('build');}openSteward(s);};
+ const rb=$('restBtn');if(rb)rb.onclick=()=>{for(let i=0;i<5;i++)SIM.tick(S);sfx('build');toast('5 дней прошли. Отряд накормлен и отдыхает.');openSteward(s);renderHud();};}
 function openRecruit(s){const n=Math.min(s.recruits,60-SIM.partySize(S));
  const troopKey=s.kind==='village'?'peasant':s.kind==='town'?'levy':'spearman';
  const T=TROOPS[troopKey];
@@ -229,7 +231,7 @@ function drawMap(){mapResize();const w=MW(),h=MH(),ms=mapScale();
  mx.fillText(`День ${S.day} · ${SIM.season(S.day).i} ${SIM.season(S.day).n} · отряд ${SIM.partySize(S)} · zoom ${mapZoom.toFixed(1)}×`,12,h-12);
  mx.textAlign='right';mx.fillText('Колесо — зум · ПКМ тащить · ЛКМ — идти/выбрать',w-12,h-12);mx.textAlign='left';}
 function renderMapSide(){
- let h=`<div class="speed" id="spd"><button data-s="0">❚❚</button><button data-s="1">▶</button><button data-s="2">▶▶</button><button data-s="4">▶▶▶</button></div>`;
+ let h=`<div class="speed" id="spd"><button data-s="0">❚❚</button><button data-s="1">▶</button><button data-s="2">▶▶</button></div>`;
  h+=`<div class="card"><div class="ct">🦅 Ваш отряд</div><div class="cd">${SIM.partySize(S)} бойцов · сила ${Math.round(SIM.partyPower(S))} · дух ${Math.round(S.player.morale)}</div>
  <div class="cd">🪙${S.player.gold} · 🌾${Math.round(S.player.food)} · 🏵️${S.player.renown}</div></div>`;
  h+=`<div class="card"><div class="ct">💾 Сохранение</div>
@@ -363,10 +365,10 @@ function frame(now){requestAnimationFrame(frame);
  const modalOpen=['ovDialog','ovParty','ovRealm','ovHelp'].some(i=>!$(i).classList.contains('hide'));
  if(view==='map'&&!modalOpen){
   acc+=dt*S.speed;
-  while(acc>=.06){acc-=.06;
-   const ev=SIM.playerMove(S,.06);
+  while(acc>=.5){acc-=.5;
+   const ev=SIM.playerMove(S,.5);
    if(ev&&ev.type==='army'){S.speed=0;startBattle(ev.army);break;}
-   if(Math.random()<.06){SIM.tick(S);}}
+   if(Math.random()<.5){SIM.tick(S);}}
   if(view==='map'){drawMap();mapDrawAcc+=dt;if(mapDrawAcc>.3){mapDrawAcc=0;renderMapSide();}}}
  if(!modalOpen||view==='battle')SC.update(dt,now/1000,WEAPONS[S.player.weapon],ARMORS[S.player.armor].arm);
  else SC.update(0,now/1000,WEAPONS[S.player.weapon],ARMORS[S.player.armor].arm);
