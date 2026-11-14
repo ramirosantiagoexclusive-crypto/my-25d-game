@@ -164,6 +164,7 @@ export function loadSettlement(s,playerTroops,onInteract){
  cam.position.set(P.x,34,P.z+22);cam.lookAt(P.x,0,P.z);}
 export function loadBattle(allies,enemies,raid,hp){
  clear();mode='battle';over=false;cfg={raid};order='attack';formation='line';enemyOrder='advance';enemyForm='line';enemyOrderTimer=0;
+ battleStartTime=0;
  world=new THREE.Group();scene.add(world);
  const gr=new THREE.Mesh(new THREE.PlaneGeometry(240,240),M.grass);gr.rotation.x=-Math.PI/2;gr.receiveShadow=true;world.add(gr);
  for(let i=0;i<34;i++){const a=Math.random()*TAU,r=34+Math.random()*30;tree(Math.cos(a)*r,Math.sin(a)*r);}
@@ -178,7 +179,7 @@ export function loadBattle(allies,enemies,raid,hp){
   g.position.set(x,0,z);world.add(g);
   units.push({g,side,type:k,d:T0,hp:T0.hp,max:T0.hp,cd:Math.random(),ph:Math.random()*TAU,alive:true,
    branch:T0.branch||'inf',mor:side>0?S_mor:80,ox:(Math.random()-.5)*14,oz:(Math.random()-.5)*6,fleeing:false});};
- let allyMor=72;i=0;for(const k in allies)for(let n=0;n<allies[k];n++){mk(k,1,(i%7-3)*2.6,18+Math.floor(i/7)*2.6);i++;}
+ let allyMor=72;let i=0;for(const k in allies)for(let n=0;n<allies[k];n++){mk(k,1,(i%7-3)*2.6,18+Math.floor(i/7)*2.6);i++;}
  i=0;for(const k in enemies)for(let n=0;n<enemies[k];n++){mk(k,-1,(i%8-3.5)*2.6,-18-Math.floor(i/8)*2.6);i++;}
  cam.position.set(0,36,42);cam.lookAt(0,0,0);}
 let S_mor=72;
@@ -188,6 +189,7 @@ export function setFormation(f){formation=f;}
 export function getFormation(){return formation;}
 export function heroHp(){return P.hp;}
 export function counts(){return{ally:units.filter(u=>u.alive&&u.side>0&&!u.fleeing).length,enemy:units.filter(u=>u.alive&&u.side<0&&!u.fleeing).length};}
+export function enemyAliveCount(){return units.filter(u=>u.alive&&u.side<0).length;}
 export function losses(){const l={};units.forEach(u=>{if(u.side>0&&!u.alive)l[u.type]=(l[u.type]||0)+1;});return l;}
 export function nearestInteract(){let best=null,bd=1e9;for(const it of inter){const d=Math.hypot(it.x-P.x,it.z-P.z);if(d<it.r&&d<bd){bd=d;best=it;}}return best;}
 function burst(x,y,z,n,col){for(let i=0;i<n;i++){const m=new THREE.Mesh(G.box,col?new THREE.MeshBasicMaterial({color:col}):M.blood);
@@ -224,12 +226,12 @@ function enemyCommander(dt){
   const allyCav=units.filter(u=>u.alive&&u.side>0&&!u.fleeing&&u.branch==='cav').length;
   if(eAlive<aAlive*.6)enemyOrder='hold';
   else if(enemyCav>2&&Math.random()<.4){enemyOrder='flank';enemyForm='wedge';}
-  else if(aAlive>eAlive&&Math.random()<.3)enemyOrder='retreat';
+  else if(aAlive>eAlive*1.5&&Math.random()<.15)enemyOrder='retreat';
   else{enemyOrder='advance';enemyForm=['line','shieldwall','loose'][Math.floor(Math.random()*3)];}
   if(allyCav>1&&enemyForm!=='square'&&Math.random()<.4)enemyForm='square';}
  const eUnits=units.filter(u=>u.alive&&u.side<0&&!u.fleeing);
  eUnits.forEach((u,idx)=>{
-  if(enemyOrder==='retreat'){u.fleeing=u.mor<25;return;}
+  if(enemyOrder==='retreat'){u.fleeing=u.mor<20&&battleStartTime>3;return;}
   if(enemyOrder==='hold'){u.holdPos=true;return;}
   u.holdPos=false;
   if(enemyOrder==='flank'&&u.branch==='cav'){
@@ -238,7 +240,7 @@ function enemyCommander(dt){
   u.flankTarget=null;});}
 function unitAI(u,dt,t,allUnits){
  if(!u.alive||u.fleeing)return;
- if(u.mor<20&&!u.fleeing){u.fleeing=true;u.g.rotation.y=Math.atan2(0-u.g.position.x,(-u.side*80)-u.g.position.z);}
+ if(u.mor<15&&!u.fleeing&&battleStartTime>2){u.fleeing=true;u.g.rotation.y=Math.atan2(0-u.g.position.x,(-u.side*80)-u.g.position.z);}
  if(u.fleeing){const fleeX=0,fleeZ=-u.side*80;const dx=fleeX-u.g.position.x,dz=fleeZ-u.g.position.z,d=Math.hypot(dx,dz)||1;
   u.g.position.x+=dx/d*u.d.spd*1.5*dt;u.g.position.z+=dz/d*u.d.spd*1.5*dt;
   u.g.userData.lL.rotation.x=Math.sin(t*14)*.7;u.g.userData.lR.rotation.x=-Math.sin(t*14)*.7;return;}
@@ -284,15 +286,16 @@ function unitAI(u,dt,t,allUnits){
   if(cavCharge)u.mor=cl(u.mor+3,0,100);}
  u.g.userData.aR.rotation.x+=(-.3-u.g.userData.aR.rotation.x)*Math.min(1,dt*8);}
 let ARMOR=3;
+let battleStartTime=0;
 function checkMorale(dead,allUnits){
  const side=dead.side;
  const sideUnits=allUnits.filter(u=>u.alive&&u.side===side&&!u.fleeing);
  const sideDead=allUnits.filter(u=>!u.alive&&u.side===side).length;
  const sideTotal=sideUnits.length+sideDead;
- if(sideTotal<2)return;
+ if(sideTotal<3)return;
  const ratio=sideDead/sideTotal;
- if(ratio>.3){sideUnits.forEach(u=>{u.mor=cl(u.mor-8,0,100);});}
- if(ratio>.5){sideUnits.forEach(u=>{u.mor=cl(u.mor-12,0,100);if(u.mor<25)u.fleeing=true;});}}
+ if(ratio>.4){sideUnits.forEach(u=>{u.mor=cl(u.mor-5,0,100);});}
+ if(ratio>.6){sideUnits.forEach(u=>{u.mor=cl(u.mor-8,0,100);if(u.mor<15&&battleStartTime>3)u.fleeing=true;});}}
 const ray=new THREE.Raycaster(),plane=new THREE.Plane(new THREE.Vector3(0,1,0),0),nd=new THREE.Vector2(),hit=new THREE.Vector3();
 export function update(dt,t,weapon,armor){
  if(!started||!hero)return;
@@ -344,9 +347,10 @@ export function update(dt,t,weapon,armor){
  if(shake>0){shake=Math.max(0,shake-dt*1.5);cam.position.x+=(Math.random()-.5)*shake;cam.position.z+=(Math.random()-.5)*shake;}
  cam.lookAt(cx,1,cz);
  const sun=scene.userData.sun;sun.position.set(cx+26,38,cz+18);sun.target.position.set(cx,0,cz);
- if(mode==='battle'&&!over){const c=counts();
-  if(c.enemy===0&&!units.some(u=>u.alive&&u.side<0))finish(true);
-  else if(P.hp<=0||c.ally===0)finish(false);}
+ if(mode==='battle'&&!over){battleStartTime+=dt;const c=counts();
+  if(battleStartTime>1.5&&c.enemy===0&&enemyAliveCount()===0)finish(true);
+  else if(P.hp<=0)finish(false);
+  else if(battleStartTime>3&&c.ally===0)finish(false);}
  if(mode==='settlement'&&P.hp<100)P.hp=Math.min(100,P.hp+dt*4);
  R.render(scene,cam);}
 function kill(u){u.alive=false;u.g.rotation.x=-Math.PI/2;u.g.position.y=.3;burst(u.g.position.x,1,u.g.position.z,10);hooks.sfx('kill');}

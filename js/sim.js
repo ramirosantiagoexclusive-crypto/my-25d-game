@@ -4,8 +4,8 @@ const SAVE_KEY='voroniy_kamen_save',SAVE_VER=2;
 export const season=d=>SEASONS[Math.floor((d%120)/30)];
 export function create(){
  const S={day:1,speed:1,mode:'scene',settlements:{},sites:SITES.map(s=>({...s})),armies:[],log:[],nid:1,
-  player:{x:.5,y:.52,tx:null,ty:null,gold:600,food:60,renown:12,honor:10,hp:100,maxHp:100,morale:72,
-   troops:{levy:6,hunter:3},weapon:1,armor:1,xp:0,lvl:1,prisoners:0,days:0},
+  player:{x:.5,y:.52,tx:null,ty:null,gold:900,food:80,renown:12,honor:10,hp:100,maxHp:100,morale:80,
+   troops:{levy:8,hunter:4,spearman:2},weapon:1,armor:1,xp:0,lvl:1,prisoners:0,days:0},
   wars:{},battle:null,result:null};
  SETTLEMENTS.forEach(d=>{S.settlements[d.id]={...d,b:{...d.b},stock:{grain:70,timber:40,stone:30,iron:12,cloth:8,tools:6,wine:4},
   project:null,upgrade:null,recruits:ri(4,9),tax:'mid',unrest:.1};});
@@ -19,7 +19,7 @@ function mkArmy(S,lord,size,at){const s=S.settlements[at]||{x:.5,y:.5};
  return{id:S.nid++,lord,x:s.x,y:s.y,tx:null,ty:null,size,mor:70,kind:'lord',target:null,raid:false,cd:0,order:'advance'};}
 export function spawnBandits(S){const a=Math.random()*6.283,r=.3+Math.random()*.16;
  S.armies.push({id:S.nid++,lord:'bandit',x:cl(.5+Math.cos(a)*r,.06,.94),y:cl(.5+Math.sin(a)*r,.06,.94),
-  tx:null,ty:null,size:ri(6,16),mor:60,kind:'bandit',target:null,raid:true,cd:0,order:'charge'});}
+  tx:null,ty:null,size:ri(4,12),mor:60,kind:'bandit',target:null,raid:true,cd:0,order:'charge'});}
 export function log(S,t,c){S.log.unshift({d:S.day,t,c:c||'#d8c9a6'});if(S.log.length>70)S.log.pop();}
 export const partySize=S=>Object.values(S.player.troops).reduce((a,b)=>a+b,0);
 export const partyPower=S=>Object.entries(S.player.troops).reduce((a,[k,n])=>a+n*(TROOPS[k].atk+TROOPS[k].arm*.6),0);
@@ -185,6 +185,6 @@ function migrate(c){
 export function restore(c){const S={...c,mode:'scene',battle:null,result:null};
  if(!S.settlements)S.settlements={};if(!S.sites)S.sites=[];
  if(!S.armies)S.armies=[];if(!S.wars)S.wars={};if(!S.log)S.log=[];
- if(!S.player)S.player={x:.5,y:.52,gold:600,food:60,renown:12,honor:10,hp:100,maxHp:100,morale:72,troops:{levy:6,hunter:3},weapon:1,armor:1,prisoners:0};
+ if(!S.player)S.player={x:.5,y:.52,gold:900,food:80,renown:12,honor:10,hp:100,maxHp:100,morale:80,troops:{levy:8,hunter:4,spearman:2},weapon:1,armor:1,prisoners:0};
  S.player.tx=null;S.player.ty=null;
  return S;}

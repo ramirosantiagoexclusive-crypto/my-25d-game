@@ -244,7 +244,7 @@ function renderMapSide(){
   <div class="row"><span>Гарнизон</span><b>${s.gar}</b></div>
   <div class="row"><span>Оборона</span><b>${SIM.defPower(s)}</b></div>
   <button class="btn gold" id="mEnter">${mine?'Войти':'Войти (чужое)'}</button>
-  ${!mine?`<button class="btn red" id="mSiege">⚔️ Осадить (сила ${Math.round(SIM.partyPower(S))})</button>`:''}</div>`;}
+  ${!mine?`<button class="btn red" id="mSiege" ${Math.hypot(s.x-S.player.x,s.y-S.player.y)>.09?'disabled':''}>⚔️ Осадить (сила ${Math.round(SIM.partyPower(S))})${Math.hypot(s.x-S.player.x,s.y-S.player.y)>.09?' — подойдите ближе':''}</button>`:''}</div>`;}
  else if(mapSel&&mapSel.army){const a=mapSel.army;
   h+=`<div class="card"><div class="ct">${a.kind==='bandit'?'🗡️ Разбойники':LORDS[a.lord].full}</div>
   <div class="cd">${a.size} человек · сила ${SIM.armyPower(a)} · дух ${Math.round(a.mor)}</div>
@@ -330,7 +330,7 @@ function endBattle(win,losses){
    else{S.player.morale=cl(S.player.morale-12,0,100);SIM.log(S,`🛡️ Осада ${s.n} отбита`,'#e07a68');}
    battleArmy=null;enterSettlement(win?s.id:'keep');}
   else if(battleArmy){SIM.applyBattle(S,battleArmy,win,losses);battleArmy=null;view='map';$('ovMap').classList.remove('hide');mapSel=null;drawMap();renderMapSide();}
-  renderHud();},2000);}
+  renderHud();},3000);}
 function renderHud(){const P=S.player,st=SC.heroState();
  $('hpF').style.width=cl(st.hp/st.max*100,0,100)+'%';$('hpT').textContent=Math.max(0,Math.round(st.hp));
  $('morF').style.width=P.morale+'%';$('morT').textContent=Math.round(P.morale);
