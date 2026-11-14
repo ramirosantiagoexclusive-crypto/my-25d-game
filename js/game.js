@@ -3,7 +3,7 @@ import * as SIM from './sim.js';
 import * as SC from './scene.js';
 const $=i=>document.getElementById(i),cl=(v,a,b)=>Math.max(a,Math.min(b,v));
 let S=SIM.create(),view='scene',curSettle='keep',mapSel=null,battleArmy=null,acc=0,last=performance.now(),muted=false,AC=null,paused=false;
-let mapPan={x:0,y:0},mapZoom=1,mapDrag=false,mapDragStart=null;
+let mapPan={x:0,y:0},mapZoom=1,mapDrag=false,mapDragStart=null,autoCenter=true;
 function sfx(k){if(muted)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();
  const t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain();o.connect(g);g.connect(AC.destination);
  const P={hit:[220,90,.09,'square',.14],swing:[520,240,.07,'sine',.07],hurt:[180,60,.2,'sawtooth',.16],
@@ -18,7 +18,7 @@ let curFormation='line';
 function cycleFormation(){const ks=Object.keys(FORMATIONS);curFormation=ks[(ks.indexOf(curFormation)+1)%ks.length];
  SC.setFormation(curFormation);updateBattleHud();sfx('ui');}
 function updateBattleHud(){const f=$('bForm');if(f)f.textContent=FORMATIONS[curFormation].n;
- const o=$('bOrd');if(o)o.textContent={attack:'В атаку',hold:'Держать строй',advance:'Наступать',follow:'За мной',retreat:'Отход'}[SC.getFormation?order:order]||order;}
+ const o=$('bOrd');if(o)o.textContent={attack:'В атаку',hold:'Держать строй',advance:'Наступать',follow:'За мной',retreat:'Отход'}[order]||order;}
 const hooks={sfx,interact:doInteract,order:o=>{order=o;const f=$('bOrd');if(f)f.textContent={attack:'В атаку',hold:'Держать строй',advance:'Наступать',follow:'За мной',retreat:'Отход'}[o];sfx('horn');},
  cycleFormation,battleEnd:(win,losses)=>endBattle(win,losses),settleInteract:null};
 let order='attack';
@@ -32,7 +32,7 @@ function enterSettlement(id){curSettle=id;view='scene';const s=S.settlements[id]
  $('place').querySelector('.n').textContent=s.n;
  $('place').querySelector('.s').textContent=`${KIND[s.kind].n} · ${LORDS[s.lord]?.n||'—'} · люд ${Math.round(s.pop)} · гарнизон ${s.gar}`;
  $('bHud').classList.remove('on');closeAll();toast(`Вы вошли в ${s.n}`);}
-function exitToMap(){view='map';$('ovMap').classList.remove('hide');mapSel=curSettle;drawMap();renderMapSide();sfx('ui');}
+function exitToMap(){view='map';autoCenter=true;$('ovMap').classList.remove('hide');mapSel=curSettle;drawMap();renderMapSide();sfx('ui');}
 function closeAll(){['ovDialog','ovParty','ovRealm','ovMap','ovHelp'].forEach(i=>$(i).classList.add('hide'));}
 function doInteract(){
  if(view!=='scene'||battleArmy)return;
@@ -162,49 +162,68 @@ function openRealm(){const own=Object.values(S.settlements).filter(s=>s.lord==='
 const mc=$('mapC'),mx=mc.getContext('2d');
 function mapResize(){const r=mc.parentElement.getBoundingClientRect();mc.width=r.width*devicePixelRatio;mc.height=r.height*devicePixelRatio;mx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);}
 const MW=()=>mc.width/devicePixelRatio,MH=()=>mc.height/devicePixelRatio;
-function w2s(nx,ny){const w=MW(),h=MH(),vw=w/mapZoom,vh=h/mapZoom;
- const cx=nx*vw+mapPan.x*w,cy=ny*vh+mapPan.y*h;return{x:cx,y:cy};}
-function s2w(sx,sy){const w=MW(),h=MH(),vw=w/mapZoom,vh=h/mapZoom;
- return{x:(sx-mapPan.x*w)/vw,y:(sy-mapPan.y*h)/vh};}
-function drawMap(){mapResize();const w=MW(),h=MH();
- mx.save();mx.fillStyle='#bcab88';mx.fillRect(0,0,w,h);
- mx.translate(mapPan.x*w,mapPan.y*h);mx.scale(mapZoom,mapZoom);
- const vw=w/mapZoom,vh=h/mapZoom;
- const g=mx.createLinearGradient(0,0,vw,vh);g.addColorStop(0,'#d8c9a4');g.addColorStop(.55,'#c9b894');g.addColorStop(1,'#bcab88');
- mx.fillStyle=g;mx.fillRect(-mapPan.x*w,-mapPan.y*h,vw,vh);
- mx.globalAlpha=.04;for(let i=0;i<260;i++){mx.fillStyle=i%2?'#6b5636':'#8a7a5e';mx.fillRect((i*137)%vw,(i*97)%vh,2,2);}mx.globalAlpha=1;
+// World coordinates are normalized 0..1. We map them to canvas pixels:
+// screen = (world - mapPan) * mapZoom * minScale, centered to fit aspect ratio.
+function mapScale(){return Math.min(MW(),MH());}
+// The world (0..1) maps to mapZoom*ms pixels. Offset centers it in the canvas.
+// When zoomed out (world smaller than canvas), offset = (canvas - world)/2 so it's centered.
+// When zoomed in (world larger than canvas), offset is clamped so we don't scroll past edges.
+function worldPx(){return mapZoom*mapScale();}
+function offX(){const wp=worldPx();return Math.max(0,(MW()-wp)/2);}
+function offY(){const wp=worldPx();return Math.max(0,(MH()-wp)/2);}
+function w2s(nx,ny){const ms=mapScale();
+ return{x:(nx-mapPan.x)*mapZoom*ms+offX(),y:(ny-mapPan.y)*mapZoom*ms+offY()};}
+function s2w(sx,sy){const ms=mapScale();
+ return{x:(sx-offX())/(mapZoom*ms)+mapPan.x,y:(sy-offY())/(mapZoom*ms)+mapPan.y};}
+function clampPan(){const ms=mapScale();
+ const worldW=mapZoom*ms,worldH=mapZoom*ms;
+ if(worldW>=MW()){const halfVW=MW()/(2*mapZoom*ms);mapPan.x=cl(mapPan.x,halfVW-0.5,0.5-halfVW);}else mapPan.x=0;
+ if(worldH>=MH()){const halfVH=MH()/(2*mapZoom*ms);mapPan.y=cl(mapPan.y,halfVH-0.5,0.5-halfVH);}else mapPan.y=0;}
+function centerOnPlayer(){mapPan.x=S.player.x;mapPan.y=S.player.y;clampPan();}
+function drawMap(){mapResize();const w=MW(),h=MH(),ms=mapScale();
+ if(autoCenter)centerOnPlayer();
+ mx.save();mx.fillStyle='#1a1610';mx.fillRect(0,0,w,h);
+ const corners=[w2s(0,0),w2s(1,0),w2s(1,1),w2s(0,1)];
+ const g=mx.createLinearGradient(corners[0].x,corners[0].y,corners[2].x,corners[2].y);
+ g.addColorStop(0,'#d8c9a4');g.addColorStop(.55,'#c9b894');g.addColorStop(1,'#bcab88');
+ mx.fillStyle=g;mx.beginPath();mx.moveTo(corners[0].x,corners[0].y);for(let i=1;i<4;i++)mx.lineTo(corners[i].x,corners[i].y);mx.closePath();mx.fill();
+ // clip to world bounds
+ mx.save();mx.beginPath();mx.moveTo(corners[0].x,corners[0].y);for(let i=1;i<4;i++)mx.lineTo(corners[i].x,corners[i].y);mx.closePath();mx.clip();
+ mx.globalAlpha=.04;for(let i=0;i<260;i++){const p=w2s((i*137)%100/100,(i*97)%100/100);mx.fillStyle=i%2?'#6b5636':'#8a7a5e';mx.fillRect(p.x,p.y,2,2);}mx.globalAlpha=1;
  mx.strokeStyle='rgba(90,70,45,.35)';mx.lineWidth=2.5;
  ROADS.forEach(([a,b])=>{const sa=S.settlements[a],sb=S.settlements[b];if(!sa||!sb)return;
-  mx.setLineDash([7,4]);mx.beginPath();mx.moveTo(sa.x*vw,sa.y*vh);mx.lineTo(sb.x*vw,sb.y*vh);mx.stroke();});
+  const pa=w2s(sa.x,sa.y),pb=w2s(sb.x,sb.y);
+  mx.setLineDash([7,4]);mx.beginPath();mx.moveTo(pa.x,pa.y);mx.lineTo(pb.x,pb.y);mx.stroke();});
  mx.setLineDash([]);
  mx.strokeStyle='rgba(90,70,45,.18)';mx.lineWidth=1.5;mx.setLineDash([2,6]);
  Object.values(S.settlements).forEach(s=>{const near=Object.values(S.settlements).filter(o=>o!==s).sort((a,b)=>Math.hypot(a.x-s.x,a.y-s.y)-Math.hypot(b.x-s.x,b.y-s.y))[0];
-  if(near){mx.beginPath();mx.moveTo(s.x*vw,s.y*vh);mx.lineTo(near.x*vw,near.y*vh);mx.stroke();}});
+  if(near){const pa=w2s(s.x,s.y),pb=w2s(near.x,near.y);mx.beginPath();mx.moveTo(pa.x,pa.y);mx.lineTo(pb.x,pb.y);mx.stroke();}});
  mx.setLineDash([]);
- S.sites.forEach(t=>{const x=t.x*vw,y=t.y*vh;mx.strokeStyle='#7a6444';mx.lineWidth=2;mx.setLineDash([3,3]);
-  mx.beginPath();mx.arc(x,y,13,0,7);mx.stroke();mx.setLineDash([]);mx.font='13px serif';mx.textAlign='center';mx.textBaseline='middle';
-  mx.fillStyle='#5a4830';mx.fillText('📍',x,y);mx.font='10px PT Sans';mx.fillText(t.n,x,y+22);});
- Object.values(S.settlements).forEach(s=>{const x=s.x*vw,y=s.y*vh,L0=LORDS[s.lord]||LORDS.you,r=s.kind==='village'?15:s.kind==='town'?20:22;
-  mx.globalAlpha=.15;mx.fillStyle=L0.c;mx.beginPath();mx.arc(x,y,r+16,0,7);mx.fill();mx.globalAlpha=1;
-  mx.fillStyle='#241c14';mx.beginPath();mx.arc(x,y,r+3,0,7);mx.fill();
-  mx.fillStyle=L0.c;mx.beginPath();mx.arc(x,y,r,0,7);mx.fill();
-  if(mapSel===s.id){mx.strokeStyle='#fff3d0';mx.lineWidth=3;mx.beginPath();mx.arc(x,y,r+7,0,7);mx.stroke();}
-  mx.font=`${r}px serif`;mx.textAlign='center';mx.textBaseline='middle';mx.fillText(KIND[s.kind].i,x,y+1);
-  mx.font='bold 12px Alegreya,serif';mx.fillStyle='#241c14';mx.fillText(s.n,x,y+r+14);
-  mx.font='10px PT Sans';mx.fillStyle='#5a4830';mx.fillText(`${Math.round(s.pop)}👥 ${s.gar}🛡️`,x,y+r+26);
-  if(s.project||s.upgrade){mx.fillStyle='#6f9450';mx.fillRect(x-16,y+r+30,32,4);}});
- S.armies.forEach(a=>{const x=a.x*vw,y=a.y*vh,c=a.kind==='bandit'?'#6b5a4a':LORDS[a.lord].c;
-  if(a.tx!=null){mx.strokeStyle=c;mx.globalAlpha=.4;mx.lineWidth=1.5;mx.setLineDash([3,3]);
-   mx.beginPath();mx.moveTo(x,y);mx.lineTo(a.tx*vw,a.ty*vh);mx.stroke();mx.setLineDash([]);mx.globalAlpha=1;}
-  mx.fillStyle='#241c14';mx.beginPath();mx.arc(x,y,11,0,7);mx.fill();
-  mx.fillStyle=c;mx.beginPath();mx.arc(x,y,8.5,0,7);mx.fill();
-  mx.font='10px serif';mx.fillStyle='#241c14';mx.fillText(a.kind==='bandit'?'🗡️':'⚔️',x,y+1);
-  mx.font='bold 9px PT Sans';mx.fillText(a.size,x,y+18);});
- const P0=S.player,px=P0.x*vw,py=P0.y*vh;
- if(P0.tx!=null){mx.strokeStyle='#c9a227';mx.lineWidth=2;mx.setLineDash([5,4]);mx.beginPath();mx.moveTo(px,py);mx.lineTo(P0.tx*vw,P0.ty*vh);mx.stroke();mx.setLineDash([]);}
- mx.fillStyle='#241c14';mx.beginPath();mx.arc(px,py,13,0,7);mx.fill();
- mx.fillStyle='#c9a227';mx.beginPath();mx.arc(px,py,10,0,7);mx.fill();
- mx.font='13px serif';mx.fillStyle='#241c14';mx.fillText('🦅',px,py+1);
+ S.sites.forEach(t=>{const p=w2s(t.x,t.y);mx.strokeStyle='#7a6444';mx.lineWidth=2;mx.setLineDash([3,3]);
+  mx.beginPath();mx.arc(p.x,p.y,13,0,7);mx.stroke();mx.setLineDash([]);mx.font='13px serif';mx.textAlign='center';mx.textBaseline='middle';
+  mx.fillStyle='#5a4830';mx.fillText('📍',p.x,p.y);mx.font='10px PT Sans';mx.fillText(t.n,p.x,p.y+22);});
+ Object.values(S.settlements).forEach(s=>{const p=w2s(s.x,s.y),L0=LORDS[s.lord]||LORDS.you,r=s.kind==='village'?15:s.kind==='town'?20:22;
+  mx.globalAlpha=.15;mx.fillStyle=L0.c;mx.beginPath();mx.arc(p.x,p.y,r+16,0,7);mx.fill();mx.globalAlpha=1;
+  mx.fillStyle='#241c14';mx.beginPath();mx.arc(p.x,p.y,r+3,0,7);mx.fill();
+  mx.fillStyle=L0.c;mx.beginPath();mx.arc(p.x,p.y,r,0,7);mx.fill();
+  if(mapSel===s.id){mx.strokeStyle='#fff3d0';mx.lineWidth=3;mx.beginPath();mx.arc(p.x,p.y,r+7,0,7);mx.stroke();}
+  mx.font=`${r}px serif`;mx.textAlign='center';mx.textBaseline='middle';mx.fillText(KIND[s.kind].i,p.x,p.y+1);
+  mx.font='bold 12px Alegreya,serif';mx.fillStyle='#241c14';mx.fillText(s.n,p.x,p.y+r+14);
+  mx.font='10px PT Sans';mx.fillStyle='#5a4830';mx.fillText(`${Math.round(s.pop)}👥 ${s.gar}🛡️`,p.x,p.y+r+26);
+  if(s.project||s.upgrade){mx.fillStyle='#6f9450';mx.fillRect(p.x-16,p.y+r+30,32,4);}});
+ S.armies.forEach(a=>{const p=w2s(a.x,a.y),c=a.kind==='bandit'?'#6b5a4a':LORDS[a.lord].c;
+  if(a.tx!=null){const pt=w2s(a.tx,a.ty);mx.strokeStyle=c;mx.globalAlpha=.4;mx.lineWidth=1.5;mx.setLineDash([3,3]);
+   mx.beginPath();mx.moveTo(p.x,p.y);mx.lineTo(pt.x,pt.y);mx.stroke();mx.setLineDash([]);mx.globalAlpha=1;}
+  mx.fillStyle='#241c14';mx.beginPath();mx.arc(p.x,p.y,11,0,7);mx.fill();
+  mx.fillStyle=c;mx.beginPath();mx.arc(p.x,p.y,8.5,0,7);mx.fill();
+  mx.font='10px serif';mx.fillStyle='#241c14';mx.fillText(a.kind==='bandit'?'🗡️':'⚔️',p.x,p.y+1);
+  mx.font='bold 9px PT Sans';mx.fillText(a.size,p.x,p.y+18);});
+ const P0=S.player,pp=w2s(P0.x,P0.y);
+ if(P0.tx!=null){const pt=w2s(P0.tx,P0.ty);mx.strokeStyle='#c9a227';mx.lineWidth=2;mx.setLineDash([5,4]);mx.beginPath();mx.moveTo(pp.x,pp.y);mx.lineTo(pt.x,pt.y);mx.stroke();mx.setLineDash([]);}
+ mx.fillStyle='#241c14';mx.beginPath();mx.arc(pp.x,pp.y,13,0,7);mx.fill();
+ mx.fillStyle='#c9a227';mx.beginPath();mx.arc(pp.x,pp.y,10,0,7);mx.fill();
+ mx.font='13px serif';mx.fillStyle='#241c14';mx.fillText('🦅',pp.x,pp.y+1);
+ mx.restore(); // un-clip
  mx.restore();
  mx.font='italic 11px Alegreya,serif';mx.fillStyle='rgba(90,70,45,.65)';mx.textAlign='left';
  mx.fillText(`День ${S.day} · ${SIM.season(S.day).i} ${SIM.season(S.day).n} · отряд ${SIM.partySize(S)} · zoom ${mapZoom.toFixed(1)}×`,12,h-12);
@@ -215,6 +234,8 @@ function renderMapSide(){
  <div class="cd">🪙${S.player.gold} · 🌾${Math.round(S.player.food)} · 🏵️${S.player.renown}</div></div>`;
  h+=`<div class="card"><div class="ct">💾 Сохранение</div>
  <div class="cb"><button class="btn sm" id="mSave">Сохранить</button><button class="btn sm" id="mLoad">Загрузить</button></div></div>`;
+ h+=`<div class="card"><div class="ct">🗺️ Навигация</div>
+ <div class="cb"><button class="btn sm" id="mCenter">🦅 К отряду</button><button class="btn sm" id="mReset">Сброс зума</button></div></div>`;
  if(mapSel&&S.settlements[mapSel]){const s=S.settlements[mapSel],mine=s.lord==='you';
   h+=`<div class="card"><div class="ct"><span>${KIND[s.kind].i} ${s.n}</span></div>
   <div class="cd">${KIND[s.kind].n} · ${LORDS[s.lord]?.full||'—'}</div>
@@ -243,16 +264,24 @@ function renderMapSide(){
  const sg=$('mSiege');if(sg)sg.onclick=()=>{const s=S.settlements[mapSel];startSiege(s);};
  const fi=$('mFight');if(fi)fi.onclick=()=>startBattle(mapSel.army);
  const fo=$('mFound');if(fo)fo.onclick=()=>{const e=SIM.foundSite(S,mapSel.site.id,S.player.gold);
-  if(e)toast(e);else{S.player.gold-=420;sfx('build');mapSel=null;}drawMap();renderMapSide();};}
-mc.addEventListener('wheel',e=>{e.preventDefault();const f=e.deltaY<0?1.15:.87;mapZoom=cl(mapZoom*f,.6,4);drawMap();},{passive:false});
+  if(e)toast(e);else{S.player.gold-=420;sfx('build');mapSel=null;}drawMap();renderMapSide();};
+ const ctr=$('mCenter');if(ctr)ctr.onclick=()=>{autoCenter=true;sfx('ui');drawMap();};
+ const rst=$('mReset');if(rst)rst.onclick=()=>{mapZoom=1;autoCenter=true;sfx('ui');drawMap();};}
+mc.addEventListener('wheel',e=>{e.preventDefault();const f=e.deltaY<0?1.15:.87;const ms=mapScale();
+ // zoom toward mouse position
+ const r=mc.getBoundingClientRect();const mx0=(e.clientX-r.left),my0=(e.clientY-r.top);
+ const before=s2w(mx0,my0);
+ mapZoom=cl(mapZoom*f,.6,6);autoCenter=false;
+ const after=s2w(mx0,my0);
+ mapPan.x+=before.x-after.x;mapPan.y+=before.y-after.y;clampPan();drawMap();},{passive:false});
 mc.addEventListener('contextmenu',e=>e.preventDefault());
-mc.addEventListener('pointerdown',e=>{if(e.button===2){mapDrag=true;mapDragStart={x:e.clientX,y:e.clientY,px:mapPan.x,py:mapPan.y};}});
+mc.addEventListener('pointerdown',e=>{if(e.button===2){mapDrag=true;autoCenter=false;mapDragStart={x:e.clientX,y:e.clientY,px:mapPan.x,py:mapPan.y};}});
 addEventListener('pointerup',()=>{mapDrag=false;});
-mc.addEventListener('pointermove',e=>{if(mapDrag&&mapDragStart){const r=mc.getBoundingClientRect();
- mapPan.x=mapDragStart.px+(e.clientX-mapDragStart.x)/r.width/mapZoom;
- mapPan.y=mapDragStart.py+(e.clientY-mapDragStart.y)/r.height/mapZoom;
- mapPan.x=cl(mapPan.x,-1,1);mapPan.y=cl(mapPan.y,-1,1);drawMap();}});
-mc.onclick=e=>{if(e.button!==0)return;const r=mc.getBoundingClientRect(),sx=(e.clientX-r.left)/r.width,sy=(e.clientY-r.top)/r.height;
+mc.addEventListener('pointermove',e=>{if(mapDrag&&mapDragStart){const r=mc.getBoundingClientRect();const ms=mapScale();
+ mapPan.x=mapDragStart.px-(e.clientX-mapDragStart.x)/(mapZoom*ms);
+ mapPan.y=mapDragStart.py-(e.clientY-mapDragStart.y)/(mapZoom*ms);
+ clampPan();drawMap();}});
+mc.onclick=e=>{if(e.button!==0)return;const r=mc.getBoundingClientRect(),sx=e.clientX-r.left,sy=e.clientY-r.top;
  const wp=s2w(sx,sy);const x=wp.x,y=wp.y;
  let best=null,bd=1e9;
  Object.values(S.settlements).forEach(s=>{const d=Math.hypot(s.x-x,s.y-y);if(d<.045/mapZoom&&d<bd){bd=d;best=s.id;}});
