@@ -5,7 +5,8 @@ export const season=d=>SEASONS[Math.floor((d%120)/30)];
 export function create(){
  const S={day:1,speed:1,mode:'scene',settlements:{},sites:SITES.map(s=>({...s})),armies:[],log:[],nid:1,
   player:{x:.5,y:.52,tx:null,ty:null,gold:900,food:120,renown:12,honor:10,hp:100,maxHp:100,morale:80,
-   troops:{levy:8,hunter:4,spearman:2},weapon:1,armor:1,xp:0,lvl:1,prisoners:0,days:0},
+   troops:{levy:8,hunter:4,spearman:2},weapon:1,armor:1,xp:0,lvl:1,prisoners:0,days:0,
+   relations:{},cargo:{}},
   wars:{},battle:null,result:null};
  SETTLEMENTS.forEach(d=>{S.settlements[d.id]={...d,b:{...d.b},stock:{grain:70,timber:40,stone:30,iron:12,cloth:8,tools:6,wine:4},
   project:null,upgrade:null,recruits:ri(4,9),tax:'mid',unrest:.1};});
@@ -24,6 +25,35 @@ export function log(S,t,c){S.log.unshift({d:S.day,t,c:c||'#d8c9a6'});if(S.log.le
 export const partySize=S=>Object.values(S.player.troops).reduce((a,b)=>a+b,0);
 export const partyPower=S=>Object.entries(S.player.troops).reduce((a,[k,n])=>a+n*(TROOPS[k].atk+TROOPS[k].arm*.6),0);
 export const wage=S=>Object.entries(S.player.troops).reduce((a,[k,n])=>a+n*TROOPS[k].wage,0);
+export const cavCount=S=>Object.entries(S.player.troops).reduce((a,[k,n])=>a+(TROOPS[k].branch==='cav'?n:0),0);
+export function mapSpeed(S){const ps=partySize(S),cav=cavCount(S),pr=S.player.prisoners||0;
+ const base=.05;const sizePenalty=Math.max(.4,1-ps/120);const cavBonus=1+cav/Math.max(1,ps)*.5;
+ const prisonerPenalty=1-pr/Math.max(1,ps+pr)*.3;
+ return base*sizePenalty*cavBonus*prisonerPenalty;}
+export function relation(S,lord){return S.player.relations[lord]||0;}
+export function changeRel(S,lord,delta){const cur=S.player.relations[lord]||0;S.player.relations[lord]=cl(cur+delta,-100,100);}
+export function recruitPrisoners(S,n){const p=S.player;if(!p.prisoners)return{err:'Нет пленных'};n=Math.min(n,p.prisoners,Math.max(0,60-partySize(S)));
+ if(n<1)return{err:'Некого брать'};p.prisoners-=n;p.troops.levy=(p.troops.levy||0)+n;p.morale=cl(p.morale-3,0,100);
+ log(S,`⛓️ ${n} пленных вступили в отряд`,'#8fa8c4');return{n};}
+export function autoResolve(S,army){const pp=partyPower(S),ap=armyPower(army);
+ const ratio=pp/Math.max(1,ap);const win=ratio*(.7+Math.random()*.6)>1;
+ const lossRate=win?1/Math.max(.5,ratio):Math.min(.7,ratio);
+ const losses={};const ps=partySize(S);
+ const lost=Math.min(ps-1,Math.round(ps*lossRate*.5));
+ const ks=Object.keys(S.player.troops).filter(k=>S.player.troops[k]>0);
+ let rem=lost;while(rem>0&&ks.length){const k=ks[Math.floor(Math.random()*ks.length)];if(S.player.troops[k]>0){S.player.troops[k]--;losses[k]=(losses[k]||0)+1;rem--;}}
+ applyBattle(S,army,win,losses);
+ return{win,losses,lost};}
+export function makePeace(S,lord){const key='you|'+lord;if(!S.wars[key])return'Войны нет';
+ const cost=Math.round(200+Math.abs(relation(S,lord))*3);
+ if(S.player.gold<cost)return'Нужно '+cost+'🪙 для дани';S.player.gold-=cost;
+ delete S.wars[key];delete S.wars[lord+'|you'];changeRel(S,lord,8);
+ log(S,`🕊️ Мир с ${LORDS[lord].n} (дань ${cost}🪙)`,'#8fc46a');return null;}
+export function declareWar(S,lord){const key='you|'+lord;if(S.wars[key])return'Уже в войне';
+ S.wars[key]=true;S.wars[lord+'|you']=true;changeRel(S,lord,-15);S.player.honor=Math.max(0,S.player.honor-2);
+ log(S,`⚔️ Вы объявили войну ${LORDS[lord].n}`,'#e07a68');return null;}
+export function sendGift(S,lord){if(relation(S,lord)>=60)return'Уже союзник';if(S.player.gold<300)return'Нужно 300🪙';S.player.gold-=300;changeRel(S,lord,12);
+ log(S,`🎁 Дар ${LORDS[lord].n}: отношения улучшены`,'#c9a227');return null;}
 export const defPower=s=>Math.round(s.gar*13+s.b.walls*22+s.b.tower*16+s.b.keep*40+s.pop*.05);
 export const armyPower=a=>Math.round(a.size*(a.kind==='bandit'?11:15)*(a.mor/80+.5));
 export const slots=s=>KIND[s.kind].slots;
@@ -140,9 +170,9 @@ export function tick(S){
  return null;}
 export function playerMove(S,dt){
  const P=S.player;if(P.tx==null)return null;
- const sp=.04*dt;if(moveToward(P,P.tx,P.ty,sp)){P.tx=null;P.ty=null;}
+ const sp=mapSpeed(S)*dt;if(moveToward(P,P.tx,P.ty,sp)){P.tx=null;P.ty=null;}
  for(const a of S.armies){
-  const hostile=a.kind==='bandit'||a.lord!=='you';
+  const hostile=a.kind==='bandit'||S.wars['you|'+a.lord]||a.lord!=='you'&&relation(S,a.lord)<-30;
   if(hostile&&Math.hypot(a.x-P.x,a.y-P.y)<.032){return{type:'army',army:a};}}
  return null;}
 export function recruit(S,id,n){const s=S.settlements[id];n=Math.min(n,s.recruits,Math.max(0,60-partySize(S)));
@@ -163,10 +193,14 @@ export function applyBattle(S,army,win,losses){
  for(const k in losses)P.troops[k]=Math.max(0,(P.troops[k]||0)-(losses[k]||0));
  Object.keys(P.troops).forEach(k=>{if(!P.troops[k])delete P.troops[k];});
  if(win){const loot=ri(60,180)+army.size*6;P.gold+=loot;P.renown+=Math.ceil(army.size/3);P.food+=ri(6,20);
-  P.prisoners+=Math.round(army.size*.25);P.morale=cl(P.morale+8,0,100);
+  const capt=Math.round(army.size*.25);P.prisoners+=capt;P.morale=cl(P.morale+8,0,100);
+  const lg=Object.keys(GOODS);const lootGood=lg[ri(0,lg.length-1)];const lootAmt=ri(2,8);
+  P.cargo=P.cargo||{};P.cargo[lootGood]=(P.cargo[lootGood]||0)+lootAmt;
   army.size=Math.round(army.size*.3);army.dead=army.size<4;army.mor=40;army.cd=10;army.tx=null;
-  log(S,`🏆 Победа! Добыча ${loot}🪙, пленных ${Math.round(army.size*.25)}`,'#c9a227');}
+  if(army.lord&&army.lord!=='bandit')changeRel(S,army.lord,-10);
+  log(S,`🏆 Победа! Добыча ${loot}🪙, пленных ${capt}, трофеи ${GOODS[lootGood].i}${lootAmt}`,'#c9a227');}
  else{P.morale=cl(P.morale-14,0,100);P.gold=Math.round(P.gold*.85);army.size=Math.round(army.size*.8);
+  if(army.lord&&army.lord!=='bandit')changeRel(S,army.lord,-3);
   log(S,'💀 Поражение. Отряд отступил, часть монет потеряна','#e07a68');}
  P.hp=Math.max(20,P.hp);}
 export function sellPrisoners(S){const n=S.player.prisoners;if(!n)return 0;const g=n*22;S.player.gold+=g;S.player.prisoners=0;
@@ -187,6 +221,7 @@ function migrate(c){
    if(!s.recruits)s.recruits=5;if(s.unrest==null)s.unrest=.1;if(!s.tax)s.tax='mid';
    if(!s.project)s.project=null;if(!s.upgrade)s.upgrade=null;}}
   if(c.player){const p=c.player;if(!p.cargo)p.cargo={};if(p.prisoners==null)p.prisoners=0;
+   if(!p.relations)p.relations={};
    if(!p.troops)p.troops={levy:6,hunter:3};if(p.weapon==null)p.weapon=1;if(p.armor==null)p.armor=1;}
   if(!c.armies)c.armies=[];if(!c.wars)c.wars={};if(!c.sites)c.sites=SITES.map(s=>({...s}));
   if(!c.log)c.log=[];if(!c.nid)c.nid=1;
@@ -195,6 +230,7 @@ function migrate(c){
 export function restore(c){const S={...c,mode:'scene',battle:null,result:null};
  if(!S.settlements)S.settlements={};if(!S.sites)S.sites=[];
  if(!S.armies)S.armies=[];if(!S.wars)S.wars={};if(!S.log)S.log=[];
- if(!S.player)S.player={x:.5,y:.52,gold:900,food:120,renown:12,honor:10,hp:100,maxHp:100,morale:80,troops:{levy:8,hunter:4,spearman:2},weapon:1,armor:1,prisoners:0};
+ if(!S.player)S.player={x:.5,y:.52,gold:900,food:120,renown:12,honor:10,hp:100,maxHp:100,morale:80,troops:{levy:8,hunter:4,spearman:2},weapon:1,armor:1,prisoners:0,cargo:{},relations:{}};
+ if(!S.player.relations)S.player.relations={};if(!S.player.cargo)S.player.cargo={};
  S.player.tx=null;S.player.ty=null;
  return S;}

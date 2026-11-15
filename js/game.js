@@ -1,6 +1,8 @@
 import {GOODS,TROOPS,BUILD,KIND,LORDS,WEAPONS,ARMORS,SEASONS,ROADS,FORMATIONS} from './data.js';
 import * as SIM from './sim.js';
 import * as SC from './scene.js';
+const relLabel=r=>r>=60?'Союзник':r>=30?'Друг':r>=10?'Нейтр.':r>=-10?'Нейтр.':r>=-30?'Неприязнь':r>=-60?'Враг':'Заклятый враг';
+const relColor=r=>r>=30?'#6f9450':r>=-10?'#d8c9a6':r>=-30?'#c98f2a':'#e07a68';
 const $=i=>document.getElementById(i),cl=(v,a,b)=>Math.max(a,Math.min(b,v));
 let S=SIM.create(),view='scene',curSettle='keep',mapSel=null,battleArmy=null,acc=0,last=performance.now(),muted=false,AC=null,paused=false;
 let mapPan={x:0,y:0},mapZoom=1,mapDrag=false,mapDragStart=null,autoCenter=true;
@@ -135,9 +137,28 @@ function openParty(){const P=S.player;
   h+=`<div class="card"><div class="ct"><span>${T.n} <small>×${P.troops[k]}</small></span><span style="font-size:11px">${branchNames[T.branch]||'Пехота'} · ур.${T.t} · ${T.wage}🪙/дн</span></div>
   <div class="cd">Здоровье ${T.hp} · удар ${T.atk} · доспех ${T.arm}${T.ranged?' · стрелок':''}${T.branch==='cav'?' · конница':''}</div>
   ${T.up?`<button class="btn sm" data-u="${k}" ${P.gold<T.uc?'disabled':''}>Обучить одного → ${TROOPS[T.up].n} (${T.uc}🪙)</button>`:''}</div>`;});
+ if(P.prisoners>0){h+=`<div class="card"><div class="ct">⛓️ Пленные (${P.prisoners})</div><div class="cd">Можно завербовать в отряд. Дёшево, но снижает дух.</div>
+ <div class="cb"><button class="btn sm" id="recP1">Завербовать 1</button><button class="btn sm" id="recP5">Завербовать 5</button>
+ <button class="btn sm" id="sellP">Продать всех (${P.prisoners*22}🪙)</button></div></div>`;}
  $('ptS').textContent=`Слава ${P.renown} · честь ${P.honor} · уровень ${P.lvl}`;
  $('ptBody').innerHTML=h;$('ovParty').classList.remove('hide');
- $('ptBody').querySelectorAll('[data-u]').forEach(b=>b.onclick=()=>{const e=SIM.upgradeTroop(S,b.dataset.u);if(e)toast(e);else{sfx('coin');feed('🎖️ Боец обучен');}openParty();});}
+ $('ptBody').querySelectorAll('[data-u]').forEach(b=>b.onclick=()=>{const e=SIM.upgradeTroop(S,b.dataset.u);if(e)toast(e);else{sfx('coin');feed('🎖️ Боец обучен');}openParty();});
+ const rP1=$('recP1');if(rP1)rP1.onclick=()=>{const r=SIM.recruitPrisoners(S,1);if(r.err)toast(r.err);else{sfx('coin');toast('Пленный завербован');}openParty();};
+ const rP5=$('recP5');if(rP5)rP5.onclick=()=>{const r=SIM.recruitPrisoners(S,5);if(r.err)toast(r.err);else{sfx('coin');toast('Завербовано 5');}openParty();};
+ const sP=$('sellP');if(sP)sP.onclick=()=>{SIM.sellPrisoners(S);sfx('coin');openParty();};}
+function openDiplo(lord){const r=SIM.relation(S,lord);const atWar=!!S.wars['you|'+lord];
+ let h=`<div class="row"><span>Отношения</span><b style="color:${relColor(r)}">${r>0?'+':''}${r} (${relLabel(r)})</b></div>
+ <div class="row"><span>Состояние</span><b style="color:${atWar?'#e07a68':'#6f9450'}">${atWar?'Война':'Мир'}</b></div>`;
+ const ss=Object.values(S.settlements).filter(s=>s.lord===lord);
+ h+=`<div class="row"><span>Владения</span><b>${ss.length} поселений</b></div>`;
+ h+=`<div class="lbl">Действия</div>`;
+ h+=`<button class="btn gold" id="dGift" ${S.player.gold<300?'disabled':''}>🎁 Дар (300🪙) — +12 отношений</button>`;
+ if(atWar)h+=`<button class="btn" id="dPeace">🕊️ Мир за дань</button>`;
+ else h+=`<button class="btn red" id="dWar">⚔️ Объявить войну</button>`;
+ dialog('Дипломатия',LORDS[lord].full,h);
+ const dg=$('dGift');if(dg)dg.onclick=()=>{const e=SIM.sendGift(S,lord);if(e)toast(e);else{sfx('coin');toast('Дар принят');}openDiplo(lord);};
+ const dpe=$('dPeace');if(dpe)dpe.onclick=()=>{const e=SIM.makePeace(S,lord);if(e)toast(e);else{sfx('ui');toast('Мир заключён');}openDiplo(lord);};
+ const dw=$('dWar');if(dw)dw.onclick=()=>{const e=SIM.declareWar(S,lord);if(e)toast(e);else{sfx('horn');toast('Война объявлена');}openDiplo(lord);};}
 function openRealm(){const own=Object.values(S.settlements).filter(s=>s.lord==='you');
  let h=`<div class="grid2"><div class="card"><div class="ct">🏰 Ваши владения</div><div class="cd">${own.length} поселений · подати ${own.reduce((a,s)=>a+(s.income||0),0)}🪙 / 5 дней</div></div>
  <div class="card"><div class="ct">📜 Войны</div><div class="cd">${Object.keys(S.wars).filter(k=>S.wars[k]).length/2||0} активных</div></div></div>`;
@@ -154,11 +175,13 @@ function openRealm(){const own=Object.values(S.settlements).filter(s=>s.lord==='
    <button class="btn sm" data-f="${t.id}" ${S.player.gold<420?'disabled':''}>Основать деревню</button></div>`);;}
  h+=`<div class="lbl">Прочие державы</div>`;
  Object.keys(LORDS).filter(l=>l!=='you').forEach(l=>{const ss=Object.values(S.settlements).filter(s=>s.lord===l);
-  const a=S.armies.find(x=>x.lord===l);
-  h+=`<div class="card"><div class="ct"><span style="color:${LORDS[l].c}">${LORDS[l].crest} ${LORDS[l].full}</span><span style="font-size:11px">${ss.length} владений</span></div>
-  <div class="cd">Войско в поле: ${a?a.size:0} чел. · ${ss.map(s=>s.n).join(', ')||'изгнан'}</div></div>`;});
+  const a=S.armies.find(x=>x.lord===l);const r=SIM.relation(S,l);
+  h+=`<div class="card"><div class="ct"><span style="color:${LORDS[l].c}">${LORDS[l].crest} ${LORDS[l].full}</span><span style="font-size:11px;color:${relColor(r)}">${relLabel(r)}</span></div>
+  <div class="cd">Войско в поле: ${a?a.size:0} чел. · ${ss.map(s=>s.n).join(', ')||'изгнан'}</div>
+  <button class="btn sm" data-d="${l}">⚖️ Дипломатия</button></div>`;});
  $('rlBody').innerHTML=h;$('ovRealm').classList.remove('hide');
  $('rlBody').querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{closeAll();enterSettlement(b.dataset.go);});
+ $('rlBody').querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>openDiplo(b.dataset.d));
  $('rlBody').querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{const e=SIM.foundSite(S,b.dataset.f,S.player.gold);
   if(e)toast(e);else{S.player.gold-=420;sfx('build');feed('🏘️ Новое поселение основано!');}openRealm();});}
 const mc=$('mapC'),mx=mc.getContext('2d');
@@ -233,7 +256,8 @@ function drawMap(){mapResize();const w=MW(),h=MH(),ms=mapScale();
 function renderMapSide(){
  let h=`<div class="speed" id="spd"><button data-s="0">❚❚</button><button data-s="1">▶</button><button data-s="2">▶▶</button></div>`;
  h+=`<div class="card"><div class="ct">🦅 Ваш отряд</div><div class="cd">${SIM.partySize(S)} бойцов · сила ${Math.round(SIM.partyPower(S))} · дух ${Math.round(S.player.morale)}</div>
- <div class="cd">🪙${S.player.gold} · 🌾${Math.round(S.player.food)} · 🏵️${S.player.renown}</div></div>`;
+ <div class="cd">🪙${S.player.gold} · 🌾${Math.round(S.player.food)} · 🏵️${S.player.renown}</div>
+ <div class="cd">🐎 Кавалерия ${SIM.cavCount(S)} · 🏃 скорость ${Math.round(SIM.mapSpeed(S)*1000)/10}</div></div>`;
  h+=`<div class="card"><div class="ct">💾 Сохранение</div>
  <div class="cb"><button class="btn sm" id="mSave">Сохранить</button><button class="btn sm" id="mLoad">Загрузить</button></div></div>`;
  h+=`<div class="card"><div class="ct">🗺️ Навигация</div>
@@ -248,9 +272,10 @@ function renderMapSide(){
   <button class="btn gold" id="mEnter">${mine?'Войти':'Войти (чужое)'}</button>
   ${!mine?`<button class="btn red" id="mSiege" ${Math.hypot(s.x-S.player.x,s.y-S.player.y)>.09?'disabled':''}>⚔️ Осадить (сила ${Math.round(SIM.partyPower(S))})${Math.hypot(s.x-S.player.x,s.y-S.player.y)>.09?' — подойдите ближе':''}</button>`:''}</div>`;}
  else if(mapSel&&mapSel.army){const a=mapSel.army;
+  const atWar=SIM.relation(S,a.lord)<-30||a.kind==='bandit';
   h+=`<div class="card"><div class="ct">${a.kind==='bandit'?'🗡️ Разбойники':LORDS[a.lord].full}</div>
-  <div class="cd">${a.size} человек · сила ${SIM.armyPower(a)} · дух ${Math.round(a.mor)}</div>
-  <button class="btn red" id="mFight">⚔️ Атаковать</button></div>`;}
+  <div class="cd">${a.size} человек · сила ${SIM.armyPower(a)} · дух ${Math.round(a.mor)}${a.kind!=='bandit'?` · ${relLabel(SIM.relation(S,a.lord))}`:''}</div>
+  <div class="cb"><button class="btn red" id="mFight">⚔️ Атаковать</button><button class="btn sm" id="mAuto">⚙️ Авто-бой</button>${a.kind!=='bandit'&&Math.hypot(a.x-S.player.x,a.y-S.player.y)<.05?`<button class="btn sm" id="mDiplo">⚖️ Дипломатия</button>`:''}</div></div>`;}
  else if(mapSel&&mapSel.site){const t=mapSel.site;
   h+=`<div class="card"><div class="ct">📍 ${t.n}</div><div class="cd">Пустое место. Можно основать деревню.</div>
   <button class="btn gold" id="mFound">Основать (420🪙 + 44🪵 + 26🪨)</button></div>`;}
@@ -265,6 +290,8 @@ function renderMapSide(){
   enterSettlement(s.id);};
  const sg=$('mSiege');if(sg)sg.onclick=()=>{const s=S.settlements[mapSel];startSiege(s);};
  const fi=$('mFight');if(fi)fi.onclick=()=>startBattle(mapSel.army);
+ const au=$('mAuto');if(au)au.onclick=()=>{const a=mapSel.army;const r=SIM.autoResolve(S,a);sfx('horn');const bm=$('bmsg');bm.querySelector('.m1').textContent=r.win?'Победа!':'Поражение';bm.querySelector('.m1').style.color=r.win?'#c9a227':'#e07a68';bm.querySelector('.m2').textContent=r.win?`Враг разбит, потеряно ${r.lost} бойцов`:`Отряд разбит, потеряно ${r.lost} бойцов`;bm.classList.add('on');setTimeout(()=>{bm.classList.remove('on');view='map';$('ovMap').classList.remove('hide');drawMap();renderMapSide();renderHud();},2500);};
+ const dp=$('mDiplo');if(dp)dp.onclick=()=>openDiplo(mapSel.army.lord);
  const fo=$('mFound');if(fo)fo.onclick=()=>{const e=SIM.foundSite(S,mapSel.site.id,S.player.gold);
   if(e)toast(e);else{S.player.gold-=420;sfx('build');mapSel=null;}drawMap();renderMapSide();};
  const ctr=$('mCenter');if(ctr)ctr.onclick=()=>{autoCenter=true;sfx('ui');drawMap();};
@@ -300,7 +327,22 @@ function troopsFromSize(size,elite){const out={};let left=size;
  else{const pool=['brigand','brigand','raider','bandit_archer','bandit_rider'];
   while(left>0){const k=pool[Math.floor(Math.random()*pool.length)];out[k]=(out[k]||0)+1;left--;}}
  return out;}
-function startBattle(army){battleArmy=army;view='battle';closeAll();
+function startBattle(army){
+ const pp=SIM.partyPower(S),ap=SIM.armyPower(army);
+ const ratio=(pp/Math.max(1,ap)).toFixed(1);
+ const isBandit=army.kind==='bandit';
+ let h=`<div class="row"><span>Ваш отряд</span><b>${SIM.partySize(S)} бойцов · сила ${Math.round(pp)}</b></div>
+ <div class="row"><span>Противник</span><b>${army.size} чел. · сила ${Math.round(ap)}</b></div>
+ <div class="row"><span>Соотношение сил</span><b style="color:${ratio>=1.5?'#6f9450':ratio>=.8?'#c9a227':'#e07a68'}">${ratio}×</b></div>`;
+ h+=`<div class="lbl">Выберите тактику</div>`;
+ h+=`<button class="btn red" id="preFight">⚔️ В бой лично</button>`;
+ h+=`<button class="btn gold" id="preAuto">⚙️ Авто-бой (расчёт по силе)</button>`;
+ h+=`<button class="btn" id="preLeave">🏃 Уйти</button>`;
+ dialog('Перед сечей',isBandit?'Разбойники':' '+LORDS[army.lord].full,h);
+ $('preFight').onclick=()=>{closeAll();doBattle(army);};
+ $('preAuto').onclick=()=>{closeAll();const r=SIM.autoResolve(S,army);sfx('horn');const bm=$('bmsg');bm.querySelector('.m1').textContent=r.win?'Победа!':'Поражение';bm.querySelector('.m1').style.color=r.win?'#c9a227':'#e07a68';bm.querySelector('.m2').textContent=r.win?`Враг разбит, потеряно ${r.lost} бойцов`:`Отряд разбит, потеряно ${r.lost} бойцов`;bm.classList.add('on');setTimeout(()=>{bm.classList.remove('on');view='map';$('ovMap').classList.remove('hide');drawMap();renderMapSide();renderHud();},2500);};
+ $('preLeave').onclick=()=>{closeAll();S.player.tx=null;S.player.ty=null;toast('Вы избегли боя');};}
+function doBattle(army){battleArmy=army;view='battle';closeAll();
  const allies={...S.player.troops};if(!Object.keys(allies).length)allies.levy=1;
  const enemies=troopsFromSize(cl(army.size,3,26),army.kind!=='bandit');
  SC.setAllyMor(S.player.morale);
@@ -332,6 +374,7 @@ function endBattle(win,losses){
    else{S.player.morale=cl(S.player.morale-12,0,100);SIM.log(S,`🛡️ Осада ${s.n} отбита`,'#e07a68');}
    battleArmy=null;enterSettlement(win?s.id:'keep');}
   else if(battleArmy){SIM.applyBattle(S,battleArmy,win,losses);battleArmy=null;view='map';$('ovMap').classList.remove('hide');mapSel=null;drawMap();renderMapSide();}
+  else {view='map';$('ovMap').classList.remove('hide');drawMap();renderMapSide();}
   renderHud();},3000);}
 function renderHud(){const P=S.player,st=SC.heroState();
  $('hpF').style.width=cl(st.hp/st.max*100,0,100)+'%';$('hpT').textContent=Math.max(0,Math.round(st.hp));
