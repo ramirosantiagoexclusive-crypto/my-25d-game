@@ -17,11 +17,15 @@
 
 - Build tool: **Vite**.
 - Package manager: **npm**.
-- Build script changed from `vite build` to `npx vite build` because the deployment shell could not resolve the locally installed `vite` binary directly.
-- Deployment environment runs `npm run build` to produce the production bundle.
+- Deployment environment (Bolt hosting) runs `npm run build` and serves the `dist/` folder.
+- Deployment environment has **no network access**; `npm install` fails with "Failed to fetch".
+- Deployment environment starts fresh without `node_modules`.
+- Build script changed to a custom `build.mjs` that checks for `node_modules/vite`: if present, runs Vite build normally; if absent, falls back to the pre-built `dist/` folder already in the repo.
+- Project maintains a pre-built `dist/` folder committed to the repo as a deployment fallback.
 
 ## Open questions & assumptions
 
-- Deployment platform/provider is unknown.
+- Deployment platform is Bolt hosting.
 - Framework used alongside Vite (e.g., React, Vue, Vanilla) is not yet confirmed.
 - Project purpose, content, and target audience remain unspecified.
+- Whether the pre-built `dist/` fallback stays in sync with source changes is not verified.
